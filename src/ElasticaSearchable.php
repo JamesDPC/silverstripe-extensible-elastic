@@ -44,6 +44,15 @@ class ElasticaSearchable extends Searchable
         $this->reIndex('Live');
     }
 
+    /**
+     * Fired by RecursivePublishable after a ChangeSet is published
+     * Requests a reindex after all relations are published
+     */
+    public function onAfterPublishRecursive() {
+        $this->liveIndex = true;
+        $this->reIndex('Live');
+    }
+
     public function onBeforeUnpublish()
     {
         // We need to remove the `live` index from the search. Because we're not
