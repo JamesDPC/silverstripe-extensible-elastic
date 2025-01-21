@@ -15,8 +15,8 @@
 		"email": "marcus@symbiote.com.au"
 	}],
 	"require": {
-		"silverstripe/cms": "~4.0",
-        "nglasl/silverstripe-extensible-search": "~4.0",
+		"silverstripe/cms": "^5",
+        "nglasl/silverstripe-extensible-search": "*",
         "heyday/silverstripe-elastica": "*",
 		"symbiote/silverstripe-multivaluefield": "*"
 	},
@@ -29,7 +29,7 @@
 	"extra": {
 		"installer-name": "extensible-elastic",
 		"branch-alias": {
-			"dev-master": "3.0.x-dev"
+			"dev-master": "4.0.x-dev"
 		}
 	}
 }
