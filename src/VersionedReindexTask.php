@@ -52,21 +52,6 @@ class VersionedReindexTask extends BuildTask
 
         }
 
-        $svc = $this->service;
-
-        $doIndex = function ($record) use ($svc, $message) {
-            if (($record instanceof SiteTree && $record->ShowInSearch) ||
-                (!$record instanceof SiteTree && ($record->hasMethod('getShowInSearch') && $record->getShowInSearch())) ||
-                (!$record instanceof SiteTree && !$record->hasMethod('getShowInSearch'))
-            ) {
-                $svc->index($record);
-                $message("INDEXED: Document Type \"" . $record->getClassName() . "\" - " . $record->getTitle() . " - ID " . $record->ID);
-            } else {
-                $svc->remove($record);
-                $message("REMOVED: Document Type \"" . $record->getClassName() . "\" - " . $record->getTitle() . " - ID " . $record->ID);
-            }
-        };
-
         if ($request->getVar('rebuild') || !$this->service->getIndex()->exists()) {
             $message('Defining the mappings (if not already)');
             $this->service->define();
@@ -78,24 +63,36 @@ class VersionedReindexTask extends BuildTask
                 // doing this manually because the base module doesn't support versioned directly
 
                 foreach ($this->service->getIndexedClasses() as $class) {
-                    Versioned::set_stage('Stage');
-                    if (!Config::inst()->get($class, 'supporting_type')) { //Only index types (or classes) that are not just supporting other index types
-                        foreach ($class::get() as $record) {
-
-                            //Only index records with Show In Search enabled for Site Tree descendants
-                            //otherwise index all other data objects
-                            $message("Indexing draft record " . $record->Title);
-                            $record->reIndex('Stage');
-                        }
-
-                        if (Extensible::has_extension($class, Versioned::class)) {
-                            Versioned::set_stage('Live');
-                            $live = Versioned::get_by_stage($class, 'Live');
-                            foreach ($live as $liveRecord) {
-                                $message("Indexing Live record " . $liveRecord->Title);
-                                $liveRecord->reIndex('Live');
+                    if (!Config::inst()->get($class, 'supporting_type')) {
+                        //Only index types (or classes) that are not just supporting other index types
+                        $message("Type: {$class}");
+                        // Draft stage index
+                        Versioned::withVersionedMode(
+                            function() use ($class, $message) {
+                                Versioned::set_stage(Versioned::DRAFT);
+                                foreach ($class::get() as $record) {
+                                    //Only index records with Show In Search enabled for Site Tree descendants
+                                    //otherwise index all other data objects
+                                    $message("Indexing Draft record #{$record->ID}/{$record->Title}");
+                                    $record->reIndex('Stage');
+                                }
                             }
-                        }
+                        );
+
+                        // Live stage index
+                        Versioned::withVersionedMode(
+                            function() use ($class, $message) {
+                                Versioned::set_stage(Versioned::LIVE);
+                                foreach ($class::get() as $record) {
+                                    //Only index records with Show In Search enabled for Site Tree descendants
+                                    //otherwise index all other data objects
+                                    $message("Indexing Live record #{$record->ID}/{$record->Title}");
+                                    $record->reIndex('Live');
+                                }
+                            }
+                        );
+                    } else {
+                        $message("Skip type supporting_type: {$class}");
                     }
                 }
             } catch (\Exception $ex) {
