@@ -20,6 +20,22 @@
         "heyday/silverstripe-elastica": "*",
         "symbiote/silverstripe-multivaluefield": "*"
     },
+    "require-dev": {
+            "cambis/silverstripe-rector": "^0.7",
+            "phpunit/phpunit": "^9.5",
+            "syntro/silverstripe-phpstan": "^5",
+            "nswdpc/ci-files": "^1"
+    },
+    "repositories": [
+        {
+            "type": "git",
+            "url": "https://github.com/nswdpc/ci-files.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/JamesDPC/silverstripe-extensible-search.git"
+        }
+    ],
     "autoload": {
         "psr-4": {
             "Symbiote\\ElasticSearch\\": "src/",
@@ -31,5 +47,7 @@
         "branch-alias": {
             "dev-master": "4.0.x-dev"
         }
-    }
+    },
+    "prefer-stable": true,
+    "minimum-stability": "dev"
 }
