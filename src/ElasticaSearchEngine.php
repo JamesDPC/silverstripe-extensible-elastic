@@ -12,7 +12,6 @@ use SilverStripe\ORM\PaginatedList;
 use SilverStripe\Security\Permission;
 use SilverStripe\Control\HTTP;
 use SilverStripe\View\ArrayData;
-
 use Elastica\Query\QueryString;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Director;
@@ -82,7 +81,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
     {
         $listType = $this->searchableTypes($page);
 
-        $allFields = array();
+        $allFields = [];
         foreach ($listType as $classType) {
             if (class_exists($classType)) {
                 $item = \singleton($classType);
@@ -109,7 +108,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
 
         $listType = $searchTypes ?? [$default];
         if (count($listType) === 0) {
-            $listType = $default ? array($default) : [];
+            $listType = $default ? [$default] : [];
         }
         return $listType;
     }
@@ -161,7 +160,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
         if (isset($data['SearchType'])) {
             $fixedType = $data['SearchType'];
             if (in_array($fixedType, $types)) {
-                $types = array($fixedType);
+                $types = [$fixedType];
             }
         }
         // (strlen($this->SearchType) ? $this->SearchType : null);
@@ -182,7 +181,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
         // Apply any hierarchy filters.
         if (count($types)) {
             $sortBy = $this->searchService->getSortFieldName($sortBy, $types);
-            $hierarchyTypes = array();
+            $hierarchyTypes = [];
             $parents = $page->SearchTrees()->count() ? implode(
                 ' OR ParentsHierarchy:',
                 $page->SearchTrees()->column('ID')
@@ -205,7 +204,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
         if (!$sortBy) {
             $sortBy = 'score';
         }
-        $sortDir = in_array($sortDir, array('ASC', 'asc', 'Ascending')) ? 'asc' : 'desc';
+        $sortDir = in_array($sortDir, ['ASC', 'asc', 'Ascending']) ? 'asc' : 'desc';
         $builder->sortBy($sortBy, $sortDir);
         $selectedFields = $page->SearchOnFields->getValues();
         $extraFields = $page->ExtraSearchFields->getValues();
@@ -213,7 +212,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
         // the following serves two purposes; filter out the searched on fields to only those that
         // are in the actually  searched on types, and to map them to relevant solr types
         if (count($selectedFields)) {
-            $mappedFields = array();
+            $mappedFields = [];
             foreach ($selectedFields as $field) {
                 $mappedField = $this->searchService->getIndexFieldName($field, $types);
                 // some fields that we're searching on don't exist in the types that the user has selected
@@ -229,7 +228,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
             $builder->queryFields($mappedFields);
         }
         if ($boost = $page->BoostFields->getValues()) {
-            $boostSetting = array();
+            $boostSetting = [];
             foreach ($boost as $field => $amount) {
                 if ($amount > 0) {
                     $boostSetting[$this->searchService->getIndexFieldName($field, $types)] = $amount;
@@ -379,9 +378,9 @@ class ElasticaSearchEngine extends CustomSearchEngine
                         $bucket['field'] = $type;
                         // Determine the redirect to be used when using the facet/aggregation.
 
-                        $bucket['link'] = HTTP::setGetVar('aggregation', array(
+                        $bucket['link'] = HTTP::setGetVar('aggregation', [
                             $type => $bucket['key']
-                        ), $link);
+                        ], $link);
 
                         // The information for each aggregation/grouping.
 

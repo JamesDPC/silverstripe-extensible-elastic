@@ -12,7 +12,6 @@ use SilverStripe\Core\Convert;
 use SilverStripe\Forms\CheckboxSetField;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
-
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\FieldGroup;
 use SilverStripe\ORM\FieldType\DBVarchar;
@@ -24,7 +23,6 @@ use SilverStripe\ORM\FieldType\DBVarchar;
  */
 class ElasticaSearchController extends Extension
 {
-
     public function updateExtensibleSearchForm(Form $form)
     {
         $page = $this->owner->data();
@@ -90,7 +88,7 @@ class ElasticaSearchController extends Extension
                                 ->setEmptyString(' ')
                                 ->setValue($values)
                         );
-                    } else if ($page->FacetStyle === 'Checkbox') {
+                    } elseif ($page->FacetStyle === 'Checkbox') {
                         $aggregationGroup->push(
                             CheckboxSetField::create("aggregation[$filterField]", $currentLabel, $options)
                                 ->addExtraClass('facet-checkbox')
@@ -123,10 +121,10 @@ class ElasticaSearchController extends Extension
                 if (!$filter) {
                     continue;
                 }
-                $bucket = array(
+                $bucket = [
                     'key' => is_array($filter) ? implode(', ', $filter) : $filter,
                     'type' => (isset($facets[$type]) ? $facets[$type] : $type)
-                );
+                ];
 
                 // Determine the redirect to be used when using the facet/aggregation.
 
@@ -240,9 +238,9 @@ class ElasticaSearchController extends Extension
 
         $sortBy        = $request->getVar('SortBy') ? $request->getVar('SortBy') : $this->owner->SortBy;
         $sortDirection = $request->getVar('SortDirection') ? $request->getVar('SortDirection') : $this->owner->SortDirection;
-        $query->getQuery()->setSort(array(
+        $query->getQuery()->setSort([
             $sortBy => strtolower($sortDirection)
-        ));
+        ]);
 
         $term    = $request->getVar('Search') ? Convert::raw2xml($request->getVar('Search')) : '';
         $message = '';
@@ -263,18 +261,18 @@ class ElasticaSearchController extends Extension
 
         $count = ($query && ($total = $query->getTotalResults())) ? $total : 0;
         if ($query) {
-            $resultData = array(
+            $resultData = [
                 'TotalResults' => $count
-            );
+            ];
             $time       = $query->getTimeTaken();
             if ($time) {
                 $elapsed = $time / 1000;
             }
         } else {
-            $resultData = array();
+            $resultData = [];
         }
 
-        $data = new ArrayObject(array(
+        $data = new ArrayObject([
             'Message' => $message,
             'Results' => $results,
             'Count' => $count,
@@ -283,7 +281,7 @@ class ElasticaSearchController extends Extension
             'ResultData' => ArrayData::create($resultData),
             'TimeTaken' => $elapsed,
             'RawQuery' => $query ? json_encode($query->getQuery()->toArray()) : ''
-        ));
+        ]);
 
         $this->owner->extend('updateSearchResults', $data);
 

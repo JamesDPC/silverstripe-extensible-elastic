@@ -76,7 +76,7 @@ class PruneStaleResultsJob extends AbstractQueuedJob
         if ($numFound == $this->number) {
             $time = 3600;
             $next = new PruneStaleResultsJob($this->filter, $this->since, $this->repeat, $this->number);
-        } else if ($this->repeat) {
+        } elseif ($this->repeat) {
             $next = new PruneStaleResultsJob($this->filter, $this->since, $this->repeat, $this->number);
         }
 

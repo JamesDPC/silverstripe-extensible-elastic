@@ -39,7 +39,8 @@ class ElasticaSearchable extends Searchable
         return parent::reIndex($currentStage);
     }
 
-    public function onAfterPublish() {
+    public function onAfterPublish()
+    {
         $this->liveIndex = true;
         $this->reIndex('Live');
     }
@@ -48,7 +49,8 @@ class ElasticaSearchable extends Searchable
      * Requests a reindex after all relations are published
      * See RecursivePublishable::publishRecursive
     */
-    public function onAfterPublishRecursive() {
+    public function onAfterPublishRecursive()
+    {
         $this->liveIndex = true;
         $this->reIndex('Live');
     }
@@ -62,7 +64,8 @@ class ElasticaSearchable extends Searchable
         $this->liveIndex = true;
     }
 
-    public function getElasticaFields() {
+    public function getElasticaFields()
+    {
         $result = parent::getElasticaFields();
 
         // this needs to be an array object because invokeWithExtensions will _not_ pass
@@ -77,9 +80,9 @@ class ElasticaSearchable extends Searchable
         ];
         $result['SS_Stage'] = ['type' => 'keyword'];
 
-        $result['PublicView'] = array('type' => 'boolean');
+        $result['PublicView'] = ['type' => 'boolean'];
         if ($this->owner->hasExtension('Hierarchy') || $this->owner->hasField('ParentID')) {
-            $result['ParentsHierarchy'] = array('type' => 'long',);
+            $result['ParentsHierarchy'] = ['type' => 'long',];
         }
 
         foreach ($result as $field => $spec) {
@@ -100,7 +103,8 @@ class ElasticaSearchable extends Searchable
 
     }
 
-    public function getElasticaDocument() {
+    public function getElasticaDocument()
+    {
         $document = parent::getElasticaDocument();
 
         $stage = null;
@@ -111,7 +115,7 @@ class ElasticaSearchable extends Searchable
             $stage = $this->liveIndex ? 'Live' : 'Stage';
             $indexedInStage = [$stage];
         } else {
-            $indexedInStage = array('Live', 'Stage');
+            $indexedInStage = ['Live', 'Stage'];
         }
         $document->set('SS_Stage', $indexedInStage);
 
@@ -124,7 +128,7 @@ class ElasticaSearchable extends Searchable
         if (!$document->has('ClassNameHierarchy')) {
             $classes = array_values(ClassInfo::ancestry($this->owner->ClassName));
             if (!$classes) {
-                $classes = array($this->owner->ClassName);
+                $classes = [$this->owner->ClassName];
             }
             $self = $this;
             $classes = array_map(function ($item) use ($self) {
@@ -139,17 +143,18 @@ class ElasticaSearchable extends Searchable
 
         $this->owner->invokeWithExtensions('updateElasticDoc', $document);
 
-		return $document;
-	}
+        return $document;
+    }
 
     /**
-	 * Get a field value representing the parents hierarchy (if applicable)
-	 *
-	 * @param type $dataObject
-	 */
-	protected function getParentsHierarchyField() {
-		// see if we've got Parent values
-        $parents = array();
+     * Get a field value representing the parents hierarchy (if applicable)
+     *
+     * @param type $dataObject
+     */
+    protected function getParentsHierarchyField()
+    {
+        // see if we've got Parent values
+        $parents = [];
 
         $parent = $this->owner;
         while ($parent && $parent->ParentID) {
@@ -161,5 +166,5 @@ class ElasticaSearchable extends Searchable
             }
         }
         return $parents;
-	}
+    }
 }

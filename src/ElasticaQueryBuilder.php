@@ -16,11 +16,11 @@ class ElasticaQueryBuilder
     public $version      = 2;
     protected $userQuery = '';
     protected $fuzziness  = 0;
-    protected $fields    = array('Title', 'Content');
-    protected $and       = array();
-    protected $params    = array();
-    protected $filters   = array();
-    protected $postFilters = array();
+    protected $fields    = ['Title', 'Content'];
+    protected $and       = [];
+    protected $params    = [];
+    protected $filters   = [];
+    protected $postFilters = [];
 
     /**
      * Should 'emtpy' user queries still generate a result set?
@@ -42,28 +42,28 @@ class ElasticaQueryBuilder
      * an array of field => amount to boost
      * @var array
      */
-    protected $boost = array();
+    protected $boost = [];
 
     /**
      * Field:value => boost amount
      *
      * @var array
      */
-    protected $boostFieldValues = array();
+    protected $boostFieldValues = [];
     protected $sort;
 
     /**
      *
      * @var array
      */
-    protected $facets = array('fields' => array(), 'queries' => array());
+    protected $facets = ['fields' => [], 'queries' => []];
 
     /**
      * Per-field facet limits
      *
      * @var array
      */
-    protected $facetFieldLimits = array();
+    protected $facetFieldLimits = [];
 
     /**
      * Number of facets to return
@@ -133,7 +133,7 @@ class ElasticaQueryBuilder
 
     public function andWith($field, $value)
     {
-        $existing = array();
+        $existing = [];
         if (isset($this->and[$field])) {
             $existing = $this->and[$field];
         }
@@ -251,14 +251,14 @@ class ElasticaQueryBuilder
         $single = (strpos($string, ' ') === false);
         if ($single && (strpos($string, '"') === false)) {
             return "{$string}$wildcard";
-        } else if ($single) {
+        } elseif ($single) {
             return $string;
         }
 
         // Parse each individual term of the input string.
 
         $string = explode(' ', $string);
-        $terms  = array();
+        $terms  = [];
         if (is_array($string)) {
             $quotation = false;
             foreach ($string as $term) {
@@ -285,7 +285,7 @@ class ElasticaQueryBuilder
 
                     // When dealing with custom grouping, make sure the search terms have been wrapped.
 
-                    $term    = str_replace(array(')' . $wildcard), array($wildcard . ')'), $term);
+                    $term    = str_replace([')' . $wildcard], [$wildcard . ')'], $term);
                     $terms[] = $term;
                 }
             }
@@ -306,8 +306,8 @@ class ElasticaQueryBuilder
     public function toQuery()
     {
         // Determine the field specific boosting to be applied.
-        $fields = array();
-        $unboostedFields = array();
+        $fields = [];
+        $unboostedFields = [];
 
         foreach ($this->fields as $field) {
             $unboostedFields[] = $field;

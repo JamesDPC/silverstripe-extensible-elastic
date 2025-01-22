@@ -8,7 +8,6 @@ use SilverStripe\Versioned\Versioned;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Dev\BuildTask;
 use SilverStripe\Core\Config\Config;
-
 use Heyday\Elastica\ElasticaService;
 use SilverStripe\CMS\Model\SiteTree;
 
@@ -21,25 +20,27 @@ class VersionedReindexTask extends BuildTask
 {
     protected $title = 'Elastic Search Reindex to include Versioned content';
 
-	protected $description = 'Refreshes the elastic search index including versioned content';
+    protected $description = 'Refreshes the elastic search index including versioned content';
 
-	/**
-	 * @var ElasticaService
-	 */
-	private $service;
+    /**
+     * @var ElasticaService
+     */
+    private $service;
 
-	public function __construct(ElasticaService $service) {
-		$this->service = $service;
-	}
+    public function __construct(ElasticaService $service)
+    {
+        $this->service = $service;
+    }
 
-	public function run($request) {
+    public function run($request)
+    {
         if (!(Permission::check('ADMIN') || Director::is_cli())) {
             exit("Invalid");
         }
 
-		$message = function ($content) {
-			print(Director::is_cli() ? "$content\n" : "<p>$content</p>");
-		};
+        $message = function ($content) {
+            print(Director::is_cli() ? "$content\n" : "<p>$content</p>");
+        };
 
         $message("Specify 'rebuild' to delete the index first, and 'reindex' to re-index content items");
 
@@ -68,7 +69,7 @@ class VersionedReindexTask extends BuildTask
                         $message("Type: {$class}");
                         // Draft stage index
                         Versioned::withVersionedMode(
-                            function() use ($class, $message) {
+                            function () use ($class, $message) {
                                 Versioned::set_stage(Versioned::DRAFT);
                                 foreach ($class::get() as $record) {
                                     //Only index records with Show In Search enabled for Site Tree descendants
@@ -81,7 +82,7 @@ class VersionedReindexTask extends BuildTask
 
                         // Live stage index
                         Versioned::withVersionedMode(
-                            function() use ($class, $message) {
+                            function () use ($class, $message) {
                                 Versioned::set_stage(Versioned::LIVE);
                                 foreach ($class::get() as $record) {
                                     //Only index records with Show In Search enabled for Site Tree descendants
@@ -139,5 +140,5 @@ class VersionedReindexTask extends BuildTask
                 }
             }
         }
-	}
+    }
 }

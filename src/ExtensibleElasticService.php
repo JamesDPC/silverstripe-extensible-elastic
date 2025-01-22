@@ -12,19 +12,17 @@ use Psr\Log\LoggerInterface;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Extensible;
 
-
 /**
  * @author marcus
  */
 class ExtensibleElasticService extends ElasticaService
 {
-
     /**
      * A mapping of all the available query builders
      *
      * @var map
      */
-    protected $queryBuilders = array();
+    protected $queryBuilders = [];
 
     protected $buffered = false;
 
@@ -58,8 +56,7 @@ class ExtensibleElasticService extends ElasticaService
         LoggerInterface $logger = null,
         $indexingMemory = null,
         $searchableExtensionClassName = Searchable::class
-    )
-    {
+    ) {
         parent::__construct($client, $indexName, $logger, $indexingMemory, $searchableExtensionClassName);
         $this->customIndexName = $indexName;
         $this->queryBuilders['default'] = ElasticaQueryBuilder::class;
@@ -68,11 +65,13 @@ class ExtensibleElasticService extends ElasticaService
     /**
      * Override as parent class uses a private var
      */
-    public function getIndex() {
+    public function getIndex()
+    {
         return $this->getClient()->getIndex($this->customIndexName);
     }
 
-    public function setIndexName($name) {
+    public function setIndexName($name)
+    {
         $this->customIndexName = $name;
     }
 
@@ -85,7 +84,7 @@ class ExtensibleElasticService extends ElasticaService
      */
     public function getIndexedClasses()
     {
-        $classes = array();
+        $classes = [];
         foreach (ClassInfo::subclassesFor('SilverStripe\ORM\DataObject') as $candidate) {
             $candidateInstance = singleton($candidate);
             if ($candidateInstance->hasExtension('Heyday\\Elastica\\Searchable')) {
@@ -120,7 +119,7 @@ class ExtensibleElasticService extends ElasticaService
         }
 
         $results = Injector::inst()->create($resultClass, $this->getIndex(), $elasticQuery, $this->logger);
-		// The result list needs to be limited so the pagination is looking at the correct page.
+        // The result list needs to be limited so the pagination is looking at the correct page.
         $results = $results->limit((int)$limit, (int)$offset);
         return $results;
 
@@ -165,7 +164,7 @@ class ExtensibleElasticService extends ElasticaService
 
     }
 
-    public function getIndexFieldName($field, $classNames = array('Page'))
+    public function getIndexFieldName($field, $classNames = ['Page'])
     {
         return $field;
     }
@@ -218,7 +217,7 @@ class ExtensibleElasticService extends ElasticaService
             throw $be;
         }
         $this->buffered = false;
-        $this->buffer = array();
+        $this->buffer = [];
     }
 
 }

@@ -12,7 +12,6 @@ use Heyday\Elastica\ResultList;
  */
 class AggregateResultList extends ResultList
 {
-
     private $aggregateResult;
 
     public function __construct($results)
