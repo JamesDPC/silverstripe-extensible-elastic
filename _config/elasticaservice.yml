@@ -1,0 +1,26 @@
+---
+Name: extensible-elasticaservice
+---
+# Override this configuration with your own project configuration
+# See elastica_service example in readme.md
+SilverStripe\Core\Injector\Injector:
+  ElasticaClient:
+    class: Elastica\Client
+    constructor:
+      host_details:
+        # Host will need updating
+        host: 'elastic'
+        # One of the available transports in \Elastica\Transport\*
+        transport: 'Http'
+        # The default port
+        port: 9200
+  Symbiote\ElasticSearch\ElasticaSearch:
+    properties:
+      searchService: '%$Heyday\Elastica\ElasticaService'
+  Heyday\Elastica\ElasticaService:
+    class: Symbiote\ElasticSearch\ExtensibleElasticService
+    constructor:
+      client: '%$ElasticaClient'
+      # ensure this index name is overridden
+      index: 'default-search-index'
+      logger: '%$Psr\Log\LoggerInterface'
