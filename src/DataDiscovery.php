@@ -27,9 +27,8 @@ class DataDiscovery extends Extension
 
     /**
      * Sets appropriate mappings for fields that need to be subsequently faceted upon
-     * @param type $mappings
      */
-    public function updateElasticMappings(array $mappings)
+    public function updateElasticMappings(array|\ArrayObject $mappings)
     {
         $mappings['BoostTerms'] = ['type' => 'text'];
         $mappings['BoostedKeywords'] = ['type' => 'keyword'];
