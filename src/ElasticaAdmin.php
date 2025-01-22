@@ -19,9 +19,11 @@ use function singleton;
  */
 class ElasticaAdmin extends ModelAdmin
 {
-    private static $url_segment = 'elasticsearch';
-    private static $managed_models = [ExtensibleSearch::class];
-    private static $menu_title = 'Elastic Search';
+    private static string $url_segment = 'elasticsearch';
+
+    private static array $managed_models = [ExtensibleSearch::class];
+
+    private static string $menu_title = 'Elastic Search';
 
     public function getEditForm($id = null, $fields = null)
     {
@@ -36,20 +38,20 @@ class ElasticaAdmin extends ModelAdmin
         return $form;
     }
 
-    public function execute($data, $form)
+    public function execute(array $data, $form): \SilverStripe\Control\HTTPResponse
     {
 
         $index = singleton(ElasticaService::class)->getIndex();
         /* @var $index Index */
-        $param = json_decode($data['rawquery'], true);
+        $param = json_decode((string) $data['rawquery'], true);
         $query = new Query($param);
 
         $response = '';
         try {
             $search = $index->search($query);
             $response = json_encode($search->getResponse()->getData());
-        } catch (Exception $ex) {
-            $response = $ex->getMessage();
+        } catch (Exception $exception) {
+            $response = $exception->getMessage();
         }
 
         $controller = $this;
@@ -57,7 +59,7 @@ class ElasticaAdmin extends ModelAdmin
             'CurrentForm' => function () use (&$form) {
                 return $form->forTemplate();
             },
-            'default' => function () use (&$controller) {
+            'default' => function () use (&$controller): \SilverStripe\Control\HTTPResponse {
                 return $controller->redirectBack();
             }
         ]);

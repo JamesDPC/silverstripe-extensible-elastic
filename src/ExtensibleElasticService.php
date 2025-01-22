@@ -44,10 +44,8 @@ class ExtensibleElasticService extends ElasticaService
 
     /**
      * ElasticaService constructor.
-     * @param Client $client
      * @param $indexName
      * @param LoggerInterface|null $logger Increases the memory limit while indexing. A memory limit string, such as "64M".
-     * @param null $indexingMemory
      * @param string $searchableExtensionClassName
      */
     public function __construct(
@@ -85,12 +83,13 @@ class ExtensibleElasticService extends ElasticaService
     public function getIndexedClasses()
     {
         $classes = [];
-        foreach (ClassInfo::subclassesFor('SilverStripe\ORM\DataObject') as $candidate) {
+        foreach (ClassInfo::subclassesFor(\SilverStripe\ORM\DataObject::class) as $candidate) {
             $candidateInstance = singleton($candidate);
-            if ($candidateInstance->hasExtension('Heyday\\Elastica\\Searchable')) {
+            if ($candidateInstance->hasExtension(\Heyday\Elastica\Searchable::class)) {
                 $classes[] = $candidate;
             }
         }
+
         return $classes;
     }
 
@@ -112,11 +111,7 @@ class ExtensibleElasticService extends ElasticaService
             $resultClass = ResultList::class;
         }
 
-        if ($query instanceof ElasticaQueryBuilder) {
-            $elasticQuery = $query->toQuery();
-        } else {
-            $elasticQuery = $query;
-        }
+        $elasticQuery = $query instanceof ElasticaQueryBuilder ? $query->toQuery() : $query;
 
         $results = Injector::inst()->create($resultClass, $this->getIndex(), $elasticQuery, $this->logger);
         // The result list needs to be limited so the pagination is looking at the correct page.
@@ -125,7 +120,7 @@ class ExtensibleElasticService extends ElasticaService
 
     }
 
-    public function isConnected()
+    public function isConnected(): bool
     {
         return true;
     }
@@ -187,6 +182,7 @@ class ExtensibleElasticService extends ElasticaService
         } else {
             return parent::index($record);
         }
+        return null;
     }
 
     /**
@@ -197,6 +193,7 @@ class ExtensibleElasticService extends ElasticaService
     {
         $this->buffered = true;
     }
+
     /**
      * Ends the current bulk index operation and indexes the buffered documents.
      */
@@ -204,7 +201,7 @@ class ExtensibleElasticService extends ElasticaService
     {
         $index = $this->getIndex();
         try {
-            foreach ($this->buffer as $type => $documents) {
+            foreach ($this->buffer as $documents) {
                 $index->addDocuments($documents);
                 $index->refresh();
             }
@@ -216,6 +213,7 @@ class ExtensibleElasticService extends ElasticaService
             error_log($be->getMessage());
             throw $be;
         }
+
         $this->buffered = false;
         $this->buffer = [];
     }

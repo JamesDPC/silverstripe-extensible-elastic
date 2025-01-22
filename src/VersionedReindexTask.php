@@ -22,24 +22,18 @@ class VersionedReindexTask extends BuildTask
 
     protected $description = 'Refreshes the elastic search index including versioned content';
 
-    /**
-     * @var ElasticaService
-     */
-    private $service;
-
-    public function __construct(ElasticaService $service)
+    public function __construct(private readonly \Heyday\Elastica\ElasticaService $service)
     {
-        $this->service = $service;
     }
 
     public function run($request)
     {
-        if (!(Permission::check('ADMIN') || Director::is_cli())) {
+        if (!Permission::check('ADMIN') && !Director::is_cli()) {
             exit("Invalid");
         }
 
-        $message = function ($content) {
-            print(Director::is_cli() ? "$content\n" : "<p>$content</p>");
+        $message = function ($content): void {
+            print(Director::is_cli() ? "{$content}\n" : "<p>{$content}</p>");
         };
 
         $message("Specify 'rebuild' to delete the index first, and 'reindex' to re-index content items");
@@ -47,7 +41,7 @@ class VersionedReindexTask extends BuildTask
         if ($request->getVar('rebuild')) {
             try {
                 $this->service->getIndex()->delete();
-            } catch (\Exception $e) {
+            } catch (\Exception) {
                 $message("Index not found to be rebuilt");
             }
 
@@ -69,7 +63,7 @@ class VersionedReindexTask extends BuildTask
                         $message("Type: {$class}");
                         // Draft stage index
                         Versioned::withVersionedMode(
-                            function () use ($class, $message) {
+                            function () use ($class, $message): void {
                                 Versioned::set_stage(Versioned::DRAFT);
                                 foreach ($class::get() as $record) {
                                     //Only index records with Show In Search enabled for Site Tree descendants
@@ -82,7 +76,7 @@ class VersionedReindexTask extends BuildTask
 
                         // Live stage index
                         Versioned::withVersionedMode(
-                            function () use ($class, $message) {
+                            function () use ($class, $message): void {
                                 Versioned::set_stage(Versioned::LIVE);
                                 foreach ($class::get() as $record) {
                                     //Only index records with Show In Search enabled for Site Tree descendants
@@ -102,7 +96,7 @@ class VersionedReindexTask extends BuildTask
         }
 
         if ($request->getVar('remove')) {
-            list($id, $type) = explode(',', $request->getVar('remove'));
+            [$id, $type] = explode(',', (string) $request->getVar('remove'));
             if (!$id && !$type) {
                 $message('Missing ID and Type for deleting from the index');
                 return;

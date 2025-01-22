@@ -29,7 +29,7 @@ use SilverStripe\Forms\ToggleCompositeField;
  */
 class ElasticaSearch extends DataExtension
 {
-    private static $db = [
+    private static array $db = [
         'QueryType' => 'Varchar',
         'Fuzziness'      => 'Int',
         'SearchType' => 'MultiValueField', // types that a user can search within
@@ -60,7 +60,7 @@ class ElasticaSearch extends DataExtension
         'ShowFacetCount' => 'Boolean',
     ];
 
-    private static $facet_styles = [
+    private static array $facet_styles = [
         'Dropdown' => 'Dropdown',
         'Links' => 'Links',
         'Checkbox'  => 'Checkbox',
@@ -99,10 +99,11 @@ class ElasticaSearch extends DataExtension
 
     public function updateExtensibleSearchPageCMSFields(FieldList $fields)
     {
-        $objFields = $this->owner->getSelectableFields();
+        $objFields = $this->getOwner()->getSelectableFields();
 
         $ff = NumericField::create('Fuzziness', _t('ExtensibleElasticaSearch.FUZZ', 'Term fuzziness'));
         $ff->setRightTitle('0 means only the exact spelling will be searched, 2 means that up to 2 differences will be considered');
+
         $fields->insertBefore('SortBy', $ff);
 
         $types  = SiteTree::page_type_classes();
@@ -149,14 +150,14 @@ class ElasticaSearch extends DataExtension
         unset($sortFields['Groups']);
         $fields->replaceField(
             'SortBy',
-            new DropdownField('SortBy', _t('ExtensibleSearchPage.SORT_BY', 'Sort By'), $sortFields)
+            \SilverStripe\Forms\DropdownField::create('SortBy', _t('ExtensibleSearchPage.SORT_BY', 'Sort By'), $sortFields)
         );
     }
 
     protected function addFacetFields(FieldList $fields, $objFields)
     {
         $facetMappingFields = $objFields;
-        if ($this->owner->CustomFacetFields && ($cff = $this->owner->CustomFacetFields->getValues())) {
+        if ($this->getOwner()->CustomFacetFields && ($cff = $this->getOwner()->CustomFacetFields->getValues())) {
             foreach ($cff as $facetField) {
                 $facetMappingFields[$facetField] = $facetField;
             }
@@ -166,13 +167,13 @@ class ElasticaSearch extends DataExtension
 
 
         $filtering = ToggleCompositeField::create("FilterFieldsList", "Filtering and facets", [
-            $kva = new KeyValueField('FilterFields', _t('ExtensibleSearchPage.FILTER_FIELDS', 'Fields to filter by')),
+            $kva = \Symbiote\MultiValueField\Fields\KeyValueField::create('FilterFields', _t('ExtensibleSearchPage.FILTER_FIELDS', 'Fields to filter by')),
             $kvb = KeyValueField::create('UserFilters', _t('ExtensibleSearchPage.USER_FILTER_FIELDS', 'User selectable filters')),
             $kvdf = KeyValueField::create('DefaultFilters', _t('ExtensibleSearchPage.DEFAULT_USER_FIELDS', 'Default filters')),
-            new HeaderField('FacetHeader', _t('ExtensibleSearchPage.FACET_HEADER', 'Facet Settings')),
+            \SilverStripe\Forms\HeaderField::create('FacetHeader', _t('ExtensibleSearchPage.FACET_HEADER', 'Facet Settings')),
             // new MultiValueDropdownField('FacetFields', _t('ExtensibleSearchPage.FACET_FIELDS', 'Fields to create facets for'), $objFields),
             // new MultiValueTextField('CustomFacetFields', _t('ExtensibleSearchPage.CUSTOM_FACET_FIELDS', 'Additional fields to create facets for')),
-            new KeyValueField('FacetMapping', _t('ExtensibleSearchPage.FACET_MAPPING', 'Mapping of facet title to nice title'), $facetMappingFields),
+            \Symbiote\MultiValueField\Fields\KeyValueField::create('FacetMapping', _t('ExtensibleSearchPage.FACET_MAPPING', 'Mapping of facet title to nice title'), $facetMappingFields),
             KeyValueField::create(
                 'FacetQueries',
                 _t('ExtensibleSearchPage.FACET_QUERIES', 'Fields to create query facets for')
@@ -224,8 +225,8 @@ class ElasticaSearch extends DataExtension
 
         $boostFields = ToggleCompositeField::create('BoostSettings', 'Boost settings', [
             NumericField::create('ContentMatchBoost', 'Boost for exact content matching'),
-            new KeyValueField('BoostFields', _t('ExtensibleSearchPage.BOOST_FIELDS', 'Boost values'), $objFields, $boostVals),
-            $f = new KeyValueField('BoostMatchFields', _t('ExtensibleSearchPage.BOOST_MATCH_FIELDS', 'Boost fields with field/value matches'), [], $boostVals)
+            \Symbiote\MultiValueField\Fields\KeyValueField::create('BoostFields', _t('ExtensibleSearchPage.BOOST_FIELDS', 'Boost values'), $objFields, $boostVals),
+            $f = \Symbiote\MultiValueField\Fields\KeyValueField::create('BoostMatchFields', _t('ExtensibleSearchPage.BOOST_MATCH_FIELDS', 'Boost fields with field/value matches'), [], $boostVals)
         ]);
 
         $f->setRightTitle('Enter a field name, followed by the value to boost if found in the result set, eg "title:Home" ');
@@ -246,7 +247,7 @@ class ElasticaSearch extends DataExtension
      */
     public function getActiveFacets()
     {
-        return isset($_GET[self::$filter_param]) ? $_GET[self::$filter_param] : [];
+        return $_GET[self::$filter_param] ?? [];
     }
 
     public function fieldsForFacets()
@@ -256,36 +257,38 @@ class ElasticaSearch extends DataExtension
         if (!$fields) {
             $fields = [];
         }
+
         foreach ($facetFields as $name) {
-            if ($this->owner->$name && $ff = $this->owner->$name->getValues()) {
-                $types = $this->owner->searchableTypes('Page');
+            if ($this->getOwner()->$name && $ff = $this->getOwner()->$name->getValues()) {
+                $types = $this->getOwner()->searchableTypes('Page');
                 foreach ($ff as $f) {
                     $fieldName = $this->searchService->getIndexFieldName($f, $types);
                     if (!$fieldName) {
                         $fieldName = $f;
                     }
+
                     $fields[] = $fieldName;
                 }
             }
         }
+
         return $fields;
     }
 
-    public function facetFieldMapping()
+    public function facetFieldMapping(): array
     {
 
-        $selected = $this->owner->FacetFields->getValues();
+        $selected = $this->getOwner()->FacetFields->getValues();
         if (!$selected) {
             $selected = [];
         }
-        $custom = $this->owner->CustomFacetFields->getValues();
+
+        $custom = $this->getOwner()->CustomFacetFields->getValues();
         if (!$custom) {
             $custom = [];
         }
 
-        $all = array_merge($selected, $custom);
-
-        return $all;
+        return array_merge($selected, $custom);
     }
 
     /**
@@ -293,58 +296,64 @@ class ElasticaSearch extends DataExtension
      *
      * @param String $term
      */
-    public function currentFacets($term = null)
+    public function currentFacets($term = null): \SilverStripe\ORM\ArrayList
     {
         if (!$this->getResults()) {
-            return new ArrayList([]);
+            return \SilverStripe\ORM\ArrayList::create([]);
         }
+
         $facets        = $this->getResults()->getFacets();
-        $queryFacets   = $this->owner->queryFacets();
-        $me            = $this->owner;
-        $convertFacets = function ($term, $raw) use ($facets, $queryFacets, $me) {
+        $queryFacets   = $this->getOwner()->queryFacets();
+        $me            = $this->getOwner();
+        $convertFacets = function ($term, $raw) use ($facets, $queryFacets, $me): array {
             $result = [];
             foreach ($raw as $facetTerm) {
                 // if it's a query facet, then we may have a label for it
                 if (isset($queryFacets[$facetTerm->Name])) {
                     $facetTerm->Name = $queryFacets[$facetTerm->Name];
                 }
+
                 $sq                          = $me->SearchQuery();
                 $sep                         = strlen($sq) ? '&amp;' : '';
-                $facetTerm->SearchLink       = $me->Link(self::RESULTS_ACTION).'?'.$sq.$sep.self::$filter_param."[$term][]=$facetTerm->Query";
-                $facetTerm->QuotedSearchLink = $me->Link(self::RESULTS_ACTION).'?'.$sq.$sep.self::$filter_param."[$term][]=&quot;$facetTerm->Query&quot;";
-                $result[]                    = new ArrayData($facetTerm);
+                $facetTerm->SearchLink       = $me->Link(self::RESULTS_ACTION).'?'.$sq.$sep.self::$filter_param."[{$term}][]=$facetTerm->Query";
+                $facetTerm->QuotedSearchLink = $me->Link(self::RESULTS_ACTION).'?'.$sq.$sep.self::$filter_param."[{$term}][]=&quot;$facetTerm->Query&quot;";
+                $result[]                    = \SilverStripe\View\ArrayData::create($facetTerm);
             }
+
             return $result;
         };
         if ($term) {
             // return just that term
-            $ret    = isset($facets[$term]) ? $facets[$term] : null;
+            $ret    = $facets[$term] ?? null;
             // lets update them all and add a link parameter
             $result = [];
             if ($ret) {
                 $result = $convertFacets($term, $ret);
             }
-            return new ArrayList($result);
+
+            return \SilverStripe\ORM\ArrayList::create($result);
         } else {
             $all = [];
             foreach ($facets as $term => $ret) {
                 $result = $convertFacets($term, $ret);
                 $all    = array_merge($all, $result);
             }
-            return new ArrayList($all);
+
+            return \SilverStripe\ORM\ArrayList::create($all);
         }
-        return new ArrayList($facets);
     }
 
     /**
      * Get the list of field -> query items to be used for faceting by query
+     * @return mixed[]
      */
-    public function queryFacets()
+    public function queryFacets(): array
     {
         $fields = [];
-        if ($this->owner->FacetQueries && $fq     = $this->owner->FacetQueries->getValues()) {
+        if ($this->getOwner()->FacetQueries && $fq     = $this->getOwner()->FacetQueries->getValues()) {
             $fields = array_flip($fq);
         }
+
         return $fields;
     }
 
@@ -359,19 +368,21 @@ class ElasticaSearch extends DataExtension
      *
      * @return String
      */
-    public function SearchQuery()
+    public function SearchQuery(): ?string
     {
-        $parts = parse_url($_SERVER['REQUEST_URI']);
+        $parts = parse_url((string) $_SERVER['REQUEST_URI']);
         if (!$parts) {
             throw new InvalidArgumentException("Can't parse URL: ".$uri);
         }
+
         // Parse params and add new variable
         $params = [];
         if (isset($parts['query'])) {
             parse_str($parts['query'], $params);
-            if (count($params)) {
+            if ($params !== []) {
                 return http_build_query($params);
             }
         }
+        return null;
     }
 }

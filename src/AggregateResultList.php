@@ -12,11 +12,10 @@ use Heyday\Elastica\ResultList;
  */
 class AggregateResultList extends ResultList
 {
-    private $aggregateResult;
+    private array $aggregateResult = [];
 
     public function __construct($results)
     {
-        $this->aggregateResult = [];
         foreach ($results as $hitData) {
             $this->aggregateResult[] = new Result($hitData);
         }

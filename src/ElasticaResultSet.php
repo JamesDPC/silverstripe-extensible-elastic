@@ -18,22 +18,6 @@ use stdClass;
 class ElasticaResultSet
 {
     /**
-     * The raw lucene query issued
-     *
-     * @var String
-     */
-    protected $query;
-
-    protected $searchService;
-
-    /**
-     * The raw result from elastic
-     *
-     * @var String
-     */
-    protected $response;
-
-    /**
      * The actual decoded search result
      *
      * @var StdClass
@@ -48,13 +32,6 @@ class ElasticaResultSet
     protected $dataObjects;
 
     /**
-     * The query parameters that were used for the query
-     *
-     * @var StdClass
-     */
-    protected $queryParameters;
-
-    /**
      * The total number of results found in this query
      *
      * @var Int
@@ -66,13 +43,26 @@ class ElasticaResultSet
      *
      * @param $query
      *			The raw lucene query issued
+     * @param string $query
+     * @param string $rawResponse
+     * @param \StdClass $parameters
      */
-    public function __construct($query, $rawResponse, $parameters, $service)
+    public function __construct(
+        /**
+         * The raw lucene query issued
+         */
+        protected $query,
+        /**
+         * The raw result from elastic
+         */
+        protected $response,
+        /**
+         * The query parameters that were used for the query
+         */
+        protected $queryParameters,
+        protected $searchService
+    )
     {
-        $this->query = $query;
-        $this->response = $rawResponse;
-        $this->queryParameters = $parameters;
-        $this->searchService = $service;
     }
 
     public function getErrors()
@@ -99,7 +89,7 @@ class ElasticaResultSet
     {
         if (!$this->result && $this->response && $this->response->getHttpStatus() >= 200 && $this->response->getHttpStatus() < 300) {
             // decode the response
-            $this->result = json_decode($this->response->getRawResponse());
+            $this->result = json_decode((string) $this->response->getRawResponse());
         }
 
         return $this->result;
@@ -136,9 +126,9 @@ class ElasticaResultSet
                 foreach ($documents->docs as $doc) {
                     $bits = explode('_', $doc->id);
                     if (count($bits) == 3) {
-                        list($type, $id, $stage) = $bits;
+                        [$type, $id, $stage] = $bits;
                     } else {
-                        list($type, $id) = $bits;
+                        [$type, $id] = $bits;
                         $stage = Versioned::current_stage();
                     }
 
@@ -147,17 +137,16 @@ class ElasticaResultSet
                         continue;
                     }
 
-                    if (strpos($doc->id, '@TODO_RAW_THINGS') === 0) {
+                    if (str_starts_with($doc->id, '@TODO_RAW_THINGS')) {
                         $object = $this->inflateRawResult($doc, $expandRawObjects);
                     } else {
                         if (!class_exists($type)) {
                             continue;
                         }
+
                         // a double sanity check for the stage here.
-                        if ($currentStage = Versioned::current_stage()) {
-                            if ($currentStage != $stage) {
-                                continue;
-                            }
+                        if (($currentStage = Versioned::current_stage()) && $currentStage != $stage) {
+                            continue;
                         }
 
                         $object = DataObject::get_by_id($type, $id);
@@ -170,11 +159,9 @@ class ElasticaResultSet
                         }
 
                         $canAdd = true;
-                        if ($evaluatePermissions) {
-                            // check if we've got a way of evaluating perms
-                            if ($object->hasMethod('canView')) {
-                                $canAdd = $object->canView();
-                            }
+                        // check if we've got a way of evaluating perms
+                        if ($evaluatePermissions && $object->hasMethod('canView')) {
+                            $canAdd = $object->canView();
                         }
 
                         if (!$evaluatePermissions || $canAdd) {
@@ -193,6 +180,7 @@ class ElasticaResultSet
                         $this->searchService->remove($doc);
                     }
                 }
+
                 $this->totalResults = $documents->numFound;
 
                 // update the dos with stats about this query
@@ -250,12 +238,14 @@ class ElasticaResultSet
                 if ($vname == '_empty_') {
                     continue;
                 }
+
                 $r = new stdClass();
                 $r->Name = $vname;
                 $r->Query = $vname;
                 $r->Count = $vcount;
                 $elemVals[] = $r;
             }
+
             $facets[$field] = $elemVals;
         }
 
@@ -267,7 +257,7 @@ class ElasticaResultSet
                     continue;
                 }
 
-                list($field, $query) = explode(':', $vname);
+                [$field, $query] = explode(':', $vname);
 
                 $r = new stdClass();
                 $r->Type = 'query';
@@ -275,7 +265,7 @@ class ElasticaResultSet
                 $r->Query = $query;
                 $r->Count = $count;
 
-                $existing = isset($facets[$field]) ? $facets[$field] : [];
+                $existing = $facets[$field] ?? [];
                 $existing[] = $r;
                 $facets[$field] = $existing;
             }

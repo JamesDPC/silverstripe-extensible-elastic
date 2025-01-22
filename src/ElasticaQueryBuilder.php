@@ -13,13 +13,21 @@ use SilverStripe\Versioned\Versioned;
 class ElasticaQueryBuilder
 {
     public $title        = 'Default Elastica';
+
     public $version      = 2;
+
     protected $userQuery = '';
+
     protected $fuzziness  = 0;
+
     protected $fields    = ['Title', 'Content'];
+
     protected $and       = [];
+
     protected $params    = [];
+
     protected $filters   = [];
+
     protected $postFilters = [];
 
     /**
@@ -27,6 +35,7 @@ class ElasticaQueryBuilder
      * @var boolean
      */
     protected $allowEmpty = false;
+
     /**
      * 	Allow "alpha only sort" fields to be wrapped in wildcard characters when queried against.
      * 	@var boolean
@@ -50,6 +59,7 @@ class ElasticaQueryBuilder
      * @var array
      */
     protected $boostFieldValues = [];
+
     protected $sort;
 
     /**
@@ -85,13 +95,13 @@ class ElasticaQueryBuilder
      */
     protected $facetCount = 1;
 
-    public function baseQuery($query)
+    public function baseQuery($query): static
     {
         $this->userQuery = $query;
         return $this;
     }
 
-    public function queryFields($fields)
+    public function queryFields($fields): static
     {
         $this->fields = $fields;
         return $this;
@@ -107,31 +117,31 @@ class ElasticaQueryBuilder
         return $this->fields;
     }
 
-    public function setFuzziness($f)
+    public function setFuzziness($f): static
     {
         $this->fuzziness = $f;
         return $this;
     }
 
-    public function setContentBoost($boost)
+    public function setContentBoost($boost): static
     {
         $this->contentBoost = $boost;
         return $this;
     }
 
-    public function setAllowEmpty($v)
+    public function setAllowEmpty($v): static
     {
         $this->allowEmpty = $v;
         return $this;
     }
 
-    public function sortBy($field, $direction)
+    public function sortBy($field, $direction): static
     {
-        $this->sort = "$field $direction";
+        $this->sort = "{$field} {$direction}";
         return $this;
     }
 
-    public function andWith($field, $value)
+    public function andWith($field, $value): static
     {
         $existing = [];
         if (isset($this->and[$field])) {
@@ -139,7 +149,7 @@ class ElasticaQueryBuilder
         }
 
         if (is_array($value)) {
-            $existing = $existing + $value;
+            $existing += $value;
         } else {
             $existing[] = $value;
         }
@@ -148,21 +158,21 @@ class ElasticaQueryBuilder
         return $this;
     }
 
-    public function setParams($params)
+    public function setParams($params): static
     {
         $this->params = $params;
         return $this;
     }
 
-    public function addFacetFields($fields, $limit = 0)
+    public function addFacetFields($fields, $limit = 0): static
     {
-        $a                      = array_merge($this->facets['fields'], $fields);
+        array_merge($this->facets['fields'], $fields);
         $this->facets['fields'] = array_unique(array_merge($this->facets['fields'], $fields));
         $this->facetLimit       = $limit;
         return $this;
     }
 
-    public function addFacetQueries($queries, $limit = 0)
+    public function addFacetQueries($queries, $limit = 0): static
     {
         $this->facets['queries'] = array_unique(array_merge($this->facets['queries'], $queries));
         if ($limit) {
@@ -172,13 +182,13 @@ class ElasticaQueryBuilder
         return $this;
     }
 
-    public function addFacetFieldLimit($field, $limit)
+    public function addFacetFieldLimit($field, $limit): static
     {
         $this->facetFieldLimits[$field] = $limit;
         return $this;
     }
 
-    public function setExpandFacetResults($expand)
+    public function setExpandFacetResults($expand): static
     {
         $this->expandFacetResults = $expand;
         return $this;
@@ -206,7 +216,7 @@ class ElasticaQueryBuilder
     public function parse($string)
     {
         // custom search query entered
-        if (strpos($string, ':') > 0) {
+        if (strpos((string) $string, ':') > 0) {
             return $string;
         }
 
@@ -223,6 +233,7 @@ class ElasticaQueryBuilder
             if (isset($this->boost[$field])) {
                 $lucene .= '^' . $this->boost[$field];
             }
+
             $sep = ' OR ';
         }
 
@@ -237,7 +248,7 @@ class ElasticaQueryBuilder
      */
     public function wildcard($string)
     {
-        if (!strlen($string)) {
+        if (!strlen((string) $string)) {
             return $string;
         }
 
@@ -248,8 +259,8 @@ class ElasticaQueryBuilder
 
         // Appropriately handle the input string if it only consists of a single term, where wildcard characters should not be wrapped around quotations.
 
-        $single = (strpos($string, ' ') === false);
-        if ($single && (strpos($string, '"') === false)) {
+        $single = (!str_contains((string) $string, ' '));
+        if ($single && (!str_contains((string) $string, '"'))) {
             return "{$string}$wildcard";
         } elseif ($single) {
             return $string;
@@ -257,7 +268,7 @@ class ElasticaQueryBuilder
 
         // Parse each individual term of the input string.
 
-        $string = explode(' ', $string);
+        $string = explode(' ', (string) $string);
         $terms  = [];
         if (is_array($string)) {
             $quotation = false;
@@ -265,12 +276,14 @@ class ElasticaQueryBuilder
                 if (!strlen($term)) {
                     continue;
                 }
+
                 // Parse a "search phrase" by storing the current state, where wildcard characters should no longer be wrapped.
 
                 if (($quotations = substr_count($term, '"')) > 0) {
                     if ($quotations === 1) {
                         $quotation = !$quotation;
                     }
+
                     $terms[] = $term;
                     continue;
                 }
@@ -278,7 +291,7 @@ class ElasticaQueryBuilder
                 // Appropriately handle each individual term depending on the "search phrase" state and any custom query syntax.
 
                 if ($quotation || ($term === 'OR') || ($term === '||') || ($term === 'AND') || ($term === '&&') || ($term
-                    === 'NOT') || ($term === '!') || (strpos($term, '+') === 0) || (strpos($term, '-') === 0)) {
+                    === 'NOT') || ($term === '!') || (str_starts_with($term, '+')) || (str_starts_with($term, '-'))) {
                     $terms[] = $term;
                 } else {
                     $term = "{$term}{$wildcard}";
@@ -290,6 +303,7 @@ class ElasticaQueryBuilder
                 }
             }
         }
+
         return implode(' ', $terms);
     }
 
@@ -303,7 +317,7 @@ class ElasticaQueryBuilder
         $this->boostFieldValues = $boost;
     }
 
-    public function toQuery()
+    public function toQuery(): \Elastica\Query
     {
         // Determine the field specific boosting to be applied.
         $fields = [];
@@ -314,6 +328,7 @@ class ElasticaQueryBuilder
             if (isset($this->boost[$field])) {
                 $field .= "^{$this->boost[$field]}";
             }
+
             $fields[] = $field;
         }
 
@@ -345,6 +360,7 @@ class ElasticaQueryBuilder
             if ($this->fuzziness) {
                 $mq2->setParam('fuzziness', (int) $this->fuzziness);
             }
+
             $subquery->addShould($mq2);
 
             // // and now one with a keyword analyzer to do exact matching of the input text for a slightly higher boost
@@ -376,6 +392,7 @@ class ElasticaQueryBuilder
                 if (!is_object($filter)) {
                     $filter = new Query\Term([$field => $filter]);
                 }
+
                 $overallFilter->addMust($filter);
             }
         }
@@ -404,14 +421,16 @@ class ElasticaQueryBuilder
                 if (!is_object($filter)) {
                     $filter = new Query\Term([$field => $filter]);
                 }
+
                 $postFilter->addMust($filter);
             }
+
             $query->setPostFilter($postFilter);
         }
 
         $sort = null;
         if ($this->sort) {
-            list($sortField, $sortOrder) = explode(" ", $this->sort);
+            [$sortField, $sortOrder] = explode(" ", (string) $this->sort);
             $sort = [
                 $sortField => [
                     'order' => $sortOrder,
@@ -427,7 +446,7 @@ class ElasticaQueryBuilder
             // The second string will be the display title.
             $aggregation = new \Elastica\Aggregation\Terms($facet);
             $aggregation->setField($facet);
-            $aggregation->setSize($this->facetLimit ? $this->facetLimit : 100);
+            $aggregation->setSize($this->facetLimit ?: 100);
 
             if (isset($this->expandFacetResults[$facet])) {
                 $expando = new TopHits('top_facet_docs');
@@ -463,7 +482,7 @@ class ElasticaQueryBuilder
      *
      * @param string $query
      */
-    public function addFilter($name, $value)
+    public function addFilter($name, $value): static
     {
         $this->filters[$name] = $value;
         return $this;
@@ -484,13 +503,13 @@ class ElasticaQueryBuilder
      * Remove a filter in place on this query
      *
      * @param string $query
-     * @param mixed $value
      */
-    public function removeFilter($query, $value = null)
+    public function removeFilter($query, mixed $value = null): static
     {
         if ($value) {
-            $query = "$query:$value";
+            $query = "{$query}:{$value}";
         }
+
         unset($this->filters[$query]);
         unset($this->postFilters[$query]);
         return $this;
@@ -504,7 +523,7 @@ class ElasticaQueryBuilder
      * @param string $field
      * @param float $radius
      */
-    public function restrictNearPoint($point, $field, $radius)
+    public function restrictNearPoint($point, $field, $radius): static
     {
         $this->addFilter("{!geofilt}", "{!geofilt}");
 

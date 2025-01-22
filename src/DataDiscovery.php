@@ -13,7 +13,7 @@ use SilverStripe\CMS\Model\SiteTree;
 class DataDiscovery extends Extension
 {
     //put your code here
-    private static $db = [
+    private static array $db = [
         'BoostTerms' => 'MultiValueField',
     ];
 
@@ -29,7 +29,7 @@ class DataDiscovery extends Extension
      * Sets appropriate mappings for fields that need to be subsequently faceted upon
      * @param type $mappings
      */
-    public function updateElasticMappings($mappings)
+    public function updateElasticMappings(array $mappings)
     {
         $mappings['BoostTerms'] = ['type' => 'text'];
         $mappings['BoostedKeywords'] = ['type' => 'keyword'];
@@ -38,7 +38,7 @@ class DataDiscovery extends Extension
         $mappings['Keywords'] = ['type' => 'text'];
         $mappings['Tags'] = ['type' => 'keyword'];
 
-        if ($this->owner instanceof SiteTree) {
+        if ($this->getOwner() instanceof SiteTree) {
             // store the SS_URL for consistency
             $mappings['SS_URL'] = ['type' => 'keyword'];
         }
@@ -47,12 +47,12 @@ class DataDiscovery extends Extension
     public function updateElasticDoc($document)
     {
 
-        $document->set('BoostTerms', $this->owner->BoostTerms->getValues());
-        $document->set('BoostedKeywords', $this->owner->BoostTerms->getValues());
+        $document->set('BoostTerms', $this->getOwner()->BoostTerms->getValues());
+        $document->set('BoostedKeywords', $this->getOwner()->BoostTerms->getValues());
 
         // expects taxonomy terms here...
-        if ($this->owner->hasMethod('Terms')) {
-            $categories = $this->owner->Terms()->column('Name');
+        if ($this->getOwner()->hasMethod('Terms')) {
+            $categories = $this->getOwner()->Terms()->column('Name');
 
             $currentCats = $document->has('Categories') ? $document->get('Categories') : [];
 
@@ -60,16 +60,16 @@ class DataDiscovery extends Extension
             $document->set('Keywords', implode(' ', $categories));
         }
 
-        if ($this->owner->hasMethod('Tags')) {
-            $tags = $this->owner->Tags()->column('Title');
+        if ($this->getOwner()->hasMethod('Tags')) {
+            $tags = $this->getOwner()->Tags()->column('Title');
             $currentCats = $document->has('Tags') ? $document->get('Tags') : [];
             $document->set('Tags', array_merge($currentCats, $tags));
         }
 
 
-        if ($this->owner instanceof SiteTree) {
+        if ($this->getOwner() instanceof SiteTree) {
             // store the SS_URL for consistency
-            $document->set('SS_URL', $this->owner->RelativeLink());
+            $document->set('SS_URL', $this->getOwner()->RelativeLink());
         }
     }
 }

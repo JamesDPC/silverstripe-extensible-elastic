@@ -53,9 +53,7 @@ class PruneStaleResultsJob extends AbstractQueuedJob
         /** @var ExtensibleElasticService $service  */
 
         $resultSet = $service->query($query, 0, $this->number);
-
-        $list = $resultSet->getResults();
-        return $list;
+        return $resultSet->getResults();
     }
 
     public function process()
@@ -80,7 +78,7 @@ class PruneStaleResultsJob extends AbstractQueuedJob
             $next = new PruneStaleResultsJob($this->filter, $this->since, $this->repeat, $this->number);
         }
 
-        if ($next) {
+        if ($next instanceof \Symbiote\ElasticSearch\PruneStaleResultsJob) {
             Injector::inst()->get(QueuedJobService::class)->queueJob($next, date('Y-m-d H:i:s', time() + $time));
         }
 

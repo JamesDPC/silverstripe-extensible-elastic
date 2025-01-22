@@ -21,10 +21,8 @@ class ElasticaSearchable extends Searchable
 
     /**
      * Are we indexing _live_ content?
-     *
-     * @var boolean
      */
-    private $liveIndex = false;
+    private bool $liveIndex = false;
 
     /**
      * Handles indexing of stage and Live content
@@ -34,8 +32,8 @@ class ElasticaSearchable extends Searchable
      */
     public function reIndex($stage = '')
     {
-        $currentStage = $stage ? $stage : Versioned::get_stage();
-        $this->liveIndex = $currentStage === 'Live' ? true : false;
+        $currentStage = $stage ?: Versioned::get_stage();
+        $this->liveIndex = $currentStage === 'Live';
         return parent::reIndex($currentStage);
     }
 
@@ -81,7 +79,7 @@ class ElasticaSearchable extends Searchable
         $result['SS_Stage'] = ['type' => 'keyword'];
 
         $result['PublicView'] = ['type' => 'boolean'];
-        if ($this->owner->hasExtension('Hierarchy') || $this->owner->hasField('ParentID')) {
+        if ($this->getOwner()->hasExtension('Hierarchy') || $this->getOwner()->hasField('ParentID')) {
             $result['ParentsHierarchy'] = ['type' => 'long',];
         }
 
@@ -92,13 +90,14 @@ class ElasticaSearchable extends Searchable
                 $result[$field] = $spec;
             }
         }
+
         if (isset($result['Content']) && count($result['Content']) && !isset($result['Content']['store'])) {
             $spec = $result['Content'];
             $spec['store'] = false;
             $result['Content'] = $spec;
         }
 
-        $this->owner->invokeWithExtensions('updateElasticMappings', $result);
+        $this->getOwner()->invokeWithExtensions('updateElasticMappings', $result);
         return $result->getArrayCopy();
 
     }
@@ -110,30 +109,30 @@ class ElasticaSearchable extends Searchable
         $stage = null;
         $indexedInStage = [];
         // is versioned, or has VersionedDataObject extension
-        if ($this->owner->hasExtension(Versioned::class) || $this->owner->hasMethod('getCMSPublishedState')) {
+        if ($this->getOwner()->hasExtension(Versioned::class) || $this->getOwner()->hasMethod('getCMSPublishedState')) {
             // add in the specific stage(s)
             $stage = $this->liveIndex ? 'Live' : 'Stage';
             $indexedInStage = [$stage];
         } else {
             $indexedInStage = ['Live', 'Stage'];
         }
+
         $document->set('SS_Stage', $indexedInStage);
 
-        $document->set('PublicView', $this->owner->canView(Member::create()));
+        $document->set('PublicView', $this->getOwner()->canView(Member::create()));
 
-        if ($this->owner->hasExtension('Hierarchy') || $this->owner->hasField('ParentID')) {
+        if ($this->getOwner()->hasExtension('Hierarchy') || $this->getOwner()->hasField('ParentID')) {
             $document->set('ParentsHierarchy', $this->getParentsHierarchyField());
         }
 
         if (!$document->has('ClassNameHierarchy')) {
-            $classes = array_values(ClassInfo::ancestry($this->owner->ClassName));
+            $classes = array_values(ClassInfo::ancestry($this->getOwner()->ClassName));
             if (!$classes) {
-                $classes = [$this->owner->ClassName];
+                $classes = [$this->getOwner()->ClassName];
             }
+
             $self = $this;
-            $classes = array_map(function ($item) use ($self) {
-                return str_replace('\\', '_', $item);
-            }, $classes);
+            $classes = array_map(fn($item): string|array => str_replace('\\', '_', $item), $classes);
 
             $document->set('ClassNameHierarchy', $classes);
         }
@@ -141,7 +140,7 @@ class ElasticaSearchable extends Searchable
         // Construct our ID based on type and stage, as _type mappings are being removed
         // in Elastic 6, meaning we need a unique ID
 
-        $this->owner->invokeWithExtensions('updateElasticDoc', $document);
+        $this->getOwner()->invokeWithExtensions('updateElasticDoc', $document);
 
         return $document;
     }
@@ -150,13 +149,14 @@ class ElasticaSearchable extends Searchable
      * Get a field value representing the parents hierarchy (if applicable)
      *
      * @param type $dataObject
+     * @return int[]
      */
-    protected function getParentsHierarchyField()
+    protected function getParentsHierarchyField(): array
     {
         // see if we've got Parent values
         $parents = [];
 
-        $parent = $this->owner;
+        $parent = $this->getOwner();
         while ($parent && $parent->ParentID) {
             $parents[] = (int) $parent->ParentID;
             $parent = $parent->Parent();
@@ -165,6 +165,7 @@ class ElasticaSearchable extends Searchable
                 $parent = null;
             }
         }
+
         return $parents;
     }
 }
