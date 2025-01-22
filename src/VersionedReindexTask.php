@@ -38,16 +38,20 @@ class VersionedReindexTask extends BuildTask
 
         $message("Specify 'rebuild' to delete the index first, and 'reindex' to re-index content items");
 
+        $index = $this->service->getIndex();
+        $indexName = $index ? $index->getName() : '(not supplied!)';
+        $message("Index: {$indexName}");
+
         if ($request->getVar('rebuild')) {
             try {
-                $this->service->getIndex()->delete();
+                $index->delete();
             } catch (\Exception) {
                 $message("Index not found to be rebuilt");
             }
 
         }
 
-        if ($request->getVar('rebuild') || !$this->service->getIndex()->exists()) {
+        if ($request->getVar('rebuild') || !$index->exists()) {
             $message('Defining the mappings (if not already)');
             $this->service->define();
         }
@@ -129,7 +133,6 @@ class VersionedReindexTask extends BuildTask
                 }
 
                 if ($request->getVar('confirm') && count($docs)) {
-                    $index = $this->service->getIndex();
                     $index->deleteDocuments($docs);
                 }
             }
