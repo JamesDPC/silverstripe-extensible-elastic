@@ -61,8 +61,7 @@ class ElasticaResultSet
          */
         protected $queryParameters,
         protected $searchService
-    )
-    {
+    ) {
     }
 
     public function getErrors()

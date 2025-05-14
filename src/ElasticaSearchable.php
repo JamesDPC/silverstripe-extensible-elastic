@@ -132,7 +132,7 @@ class ElasticaSearchable extends Searchable
             }
 
             $self = $this;
-            $classes = array_map(fn($item): string|array => str_replace('\\', '_', $item), $classes);
+            $classes = array_map(fn ($item): string|array => str_replace('\\', '_', $item), $classes);
 
             $document->set('ClassNameHierarchy', $classes);
         }
