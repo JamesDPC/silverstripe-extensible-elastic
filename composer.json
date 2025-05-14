@@ -16,15 +16,15 @@
     }],
     "require": {
         "silverstripe/cms": "^5",
-        "nglasl/silverstripe-extensible-search": "*",
-        "heyday/silverstripe-elastica": "*",
-        "symbiote/silverstripe-multivaluefield": "*"
+        "nglasl/silverstripe-extensible-search": "dev-ss5",
+        "heyday/silverstripe-elastica": "^4.3",
+        "symbiote/silverstripe-multivaluefield": "^6"
     },
     "require-dev": {
-            "cambis/silverstripe-rector": "^0.7",
+            "cambis/silverstripe-rector": "^1",
+            "cambis/silverstan": "^1",
             "phpunit/phpunit": "^9.5",
-            "syntro/silverstripe-phpstan": "^5",
-            "nswdpc/ci-files": "^1"
+            "nswdpc/ci-files": "dev-v-3"
     },
     "repositories": [
         {
@@ -49,5 +49,11 @@
         }
     },
     "prefer-stable": true,
-    "minimum-stability": "dev"
+    "minimum-stability": "dev",
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true,
+            "silverstripe/vendor-plugin": true
+        }
+    }
 }
