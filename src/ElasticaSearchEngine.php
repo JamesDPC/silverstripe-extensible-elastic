@@ -410,7 +410,6 @@ class ElasticaSearchEngine extends CustomSearchEngine
             }
         }
 
-        $this->resultList = $resultSet;
         $this->currentResults = $results;
 
         if (isset($_GET['debug']) && Permission::check('ADMIN')) {
