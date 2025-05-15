@@ -10,6 +10,7 @@ use SilverStripe\Dev\BuildTask;
 use SilverStripe\Core\Config\Config;
 use Heyday\Elastica\ElasticaService;
 use SilverStripe\CMS\Model\SiteTree;
+use SilverStripe\ORM\DB;
 
 /**
  *
@@ -32,51 +33,47 @@ class VersionedReindexTask extends BuildTask
             exit("Invalid");
         }
 
-        $message = function ($content): void {
-            print(Director::is_cli() ? "{$content}\n" : "<p>{$content}</p>");
-        };
-
-        $message("Specify 'rebuild' to delete the index first, and 'reindex' to re-index content items");
+        DB::alteration_message("Specify 'rebuild' to delete the index first, and 'reindex' to re-index content items", "notice");
 
         $index = $this->service->getIndex();
         $indexName = $index ? $index->getName() : '(not supplied!)';
-        $message("Index: {$indexName}");
+        DB::alteration_message("Index: {$indexName}", "notice");
 
         if ($request->getVar('rebuild')) {
             try {
                 $index->delete();
             } catch (\Exception) {
-                $message("Index not found to be rebuilt");
+                DB::alteration_message("Index not found to be rebuilt", "notice");
             }
 
         }
 
         if ($request->getVar('rebuild') || !$index->exists()) {
-            $message('Defining the mappings (if not already)');
+            DB::alteration_message('Defining the mappings (if not already)', "notice");
             $this->service->define();
         }
 
         if ($request->getVar('reindex')) {
-            $message('Refreshing the index');
+            DB::alteration_message('Refreshing the index', "notice");
             try {
                 // doing this manually because the base module doesn't support versioned directly
 
                 foreach ($this->service->getIndexedClasses() as $class) {
                     if (!Config::inst()->get($class, 'supporting_type')) {
                         //Only index types (or classes) that are not just supporting other index types
-                        $message("Type: {$class}");
+                        DB::alteration_message("Type: {$class}", "notice");
                         // Draft stage index
                         Versioned::withVersionedMode(
-                            function () use ($class, $message): void {
+                            function () use ($class): void {
                                 Versioned::set_stage(Versioned::DRAFT);
                                 foreach ($class::get() as $record) {
                                     try {
                                         //Only index records with Show In Search enabled for Site Tree descendants
                                         //otherwise index all other data objects
-                                        $message("Indexing Draft record #{$record->ID}/{$record->Title}");
+                                        DB::alteration_message("Indexing Draft record #{$record->ID}/{$record->Title}", "notice");
                                         $record->reIndex('Stage');
                                     } catch (\Exception $exception) {
-                                        $message("Failed Indexing Draft record #{$record->ID}/{$record->Title}: {$exception->getMessage()}");
+                                        DB::alteration_message("Failed Indexing Draft record #{$record->ID}/{$record->Title}: {$exception->getMessage()}", "error");
                                     }
                                 }
                             }
@@ -84,33 +81,33 @@ class VersionedReindexTask extends BuildTask
 
                         // Live stage index
                         Versioned::withVersionedMode(
-                            function () use ($class, $message): void {
+                            function () use ($class): void {
                                 Versioned::set_stage(Versioned::LIVE);
                                 foreach ($class::get() as $record) {
                                     try {
                                         //Only index records with Show In Search enabled for Site Tree descendants
                                         //otherwise index all other data objects
-                                        $message("Indexing Live record #{$record->ID}/{$record->Title}");
+                                        DB::alteration_message("Indexing Live record #{$record->ID}/{$record->Title}", "notice");
                                         $record->reIndex('Live');
                                     } catch (\Exception $exception) {
-                                        $message("Failed Indexing Live record #{$record->ID}/{$record->Title}: {$exception->getMessage()}");
+                                        DB::alteration_message("Failed Indexing Live record #{$record->ID}/{$record->Title}: {$exception->getMessage()}", "error");
                                     }
                                 }
                             }
                         );
                     } else {
-                        $message("Skip type supporting_type: {$class}");
+                        DB::alteration_message("Skip type supporting_type: {$class}", "notice");
                     }
                 }
             } catch (\Exception $exception) {
-                $message("Some failures detected when indexing: " . $exception->getMessage());
+                DB::alteration_message("Some failures detected when indexing: " . $exception->getMessage(), "error");
             }
         }
 
         if ($request->getVar('remove')) {
             [$id, $type] = explode(',', (string) $request->getVar('remove'));
             if (!$id && !$type) {
-                $message('Missing ID and Type for deleting from the index');
+                DB::alteration_message("Missing ID and Type for deleting from the index", "error");
                 return;
             }
 
@@ -135,7 +132,7 @@ class VersionedReindexTask extends BuildTask
 
                 foreach ($results as $result) {
                     if ($result->getId()) {
-                        $message("Removing " . $result->getId());
+                        DB::alteration_message("Removing " . $result->getId(), "notice");
                         $docs[] = $result->getDocument();
                     }
                 }
