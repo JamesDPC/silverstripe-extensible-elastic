@@ -70,10 +70,14 @@ class VersionedReindexTask extends BuildTask
                             function () use ($class, $message): void {
                                 Versioned::set_stage(Versioned::DRAFT);
                                 foreach ($class::get() as $record) {
-                                    //Only index records with Show In Search enabled for Site Tree descendants
-                                    //otherwise index all other data objects
-                                    $message("Indexing Draft record #{$record->ID}/{$record->Title}");
-                                    $record->reIndex('Stage');
+                                    try {
+                                        //Only index records with Show In Search enabled for Site Tree descendants
+                                        //otherwise index all other data objects
+                                        $message("Indexing Draft record #{$record->ID}/{$record->Title}");
+                                        $record->reIndex('Stage');
+                                    } catch (\Exception $exception) {
+                                        $message("Failed Indexing Draft record #{$record->ID}/{$record->Title}: {$exception->getMessage()}");
+                                    }
                                 }
                             }
                         );
@@ -83,10 +87,14 @@ class VersionedReindexTask extends BuildTask
                             function () use ($class, $message): void {
                                 Versioned::set_stage(Versioned::LIVE);
                                 foreach ($class::get() as $record) {
-                                    //Only index records with Show In Search enabled for Site Tree descendants
-                                    //otherwise index all other data objects
-                                    $message("Indexing Live record #{$record->ID}/{$record->Title}");
-                                    $record->reIndex('Live');
+                                    try {
+                                        //Only index records with Show In Search enabled for Site Tree descendants
+                                        //otherwise index all other data objects
+                                        $message("Indexing Live record #{$record->ID}/{$record->Title}");
+                                        $record->reIndex('Live');
+                                    } catch (\Exception $exception) {
+                                        $message("Failed Indexing Live record #{$record->ID}/{$record->Title}: {$exception->getMessage()}");
+                                    }
                                 }
                             }
                         );
@@ -94,8 +102,8 @@ class VersionedReindexTask extends BuildTask
                         $message("Skip type supporting_type: {$class}");
                     }
                 }
-            } catch (\Exception $ex) {
-                $message("Some failures detected when indexing " . $ex->getMessage());
+            } catch (\Exception $exception) {
+                $message("Some failures detected when indexing: " . $exception->getMessage());
             }
         }
 
