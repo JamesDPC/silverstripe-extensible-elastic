@@ -10,10 +10,12 @@
     ],
     "homepage": "https://github.com/nyeholt/silverstripe-extensible-elastic",
     "license": "BSD-3-Clause",
-    "authors": [{
-        "name": "Marcus Nyeholt",
-        "email": "marcus@symbiote.com.au"
-    }],
+    "authors": [
+        {
+            "name": "Marcus Nyeholt",
+            "email": "marcus@symbiote.com.au"
+        }
+    ],
     "require": {
         "silverstripe/cms": "^5",
         "nglasl/silverstripe-extensible-search": "dev-ss5",
@@ -21,10 +23,10 @@
         "symbiote/silverstripe-multivaluefield": "^6"
     },
     "require-dev": {
-            "cambis/silverstripe-rector": "^1",
-            "cambis/silverstan": "^1",
-            "phpunit/phpunit": "^9.5",
-            "nswdpc/ci-files": "dev-v-3"
+        "cambis/silverstripe-rector": "^1",
+        "cambis/silverstan": "^1",
+        "phpunit/phpunit": "^9.5",
+        "nswdpc/ci-files": "dev-v-3"
     },
     "repositories": [
         {
