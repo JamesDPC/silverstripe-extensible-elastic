@@ -19,7 +19,7 @@ class DataDiscovery extends Extension
 
     public function updateCMSFields(FieldList $fields)
     {
-        $fields->addFieldsToTab('Root.Tagging', $mvf = MultiValueTextField::create('BoostTerms', 'Boost for these keywords'));
+        $fields->addFieldToTab('Root.Tagging', $mvf = MultiValueTextField::create('BoostTerms', 'Boost for these keywords'));
         $mvf->setRightTitle("Enter the word 'important' to boost this item in any search it appears in");
 
     }

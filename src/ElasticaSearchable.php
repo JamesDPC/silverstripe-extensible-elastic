@@ -28,7 +28,6 @@ class ElasticaSearchable extends Searchable
      * Handles indexing of stage and Live content
      *
      * @param string $stage
-     * @return void
      */
     public function reIndex($stage = '')
     {
@@ -148,7 +147,6 @@ class ElasticaSearchable extends Searchable
     /**
      * Get a field value representing the parents hierarchy (if applicable)
      *
-     * @param type $dataObject
      * @return int[]
      */
     protected function getParentsHierarchyField(): array

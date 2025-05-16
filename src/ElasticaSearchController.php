@@ -4,6 +4,7 @@ namespace Symbiote\ElasticSearch;
 
 use ArrayObject;
 use Elastica\ResultSet;
+use Elastica\Query\QueryString;
 use SilverStripe\Core\Extension;
 use SilverStripe\Forms\Form;
 use SilverStripe\Control\HTTP;
@@ -240,7 +241,7 @@ class ElasticaSearchController extends Extension
             // HACK sorry
             $q = $query->getQuery()->getQuery()->getParam('query');
             foreach ($aggregation as $field => $value) {
-                $q->addFilter(new Query\QueryString("{$field}:\"{$value}\""));
+                $q->addFilter(new QueryString("{$field}:\"{$value}\""));
             }
         }
 
@@ -260,7 +261,7 @@ class ElasticaSearchController extends Extension
                 $this->getOwner()->ResultsPerPage,
                 $request->getVar('start') ?: 0
             ) : ArrayList::create();
-        } catch (Exception $exception) {
+        } catch (\Exception $exception) {
             error_log($exception->getMessage());
             $message = 'Search failed';
             $query   = null;

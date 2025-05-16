@@ -166,7 +166,6 @@ class ElasticaQueryBuilder
 
     public function addFacetFields($fields, $limit = 0): static
     {
-        array_merge($this->facets['fields'], $fields);
         $this->facets['fields'] = array_unique(array_merge($this->facets['fields'], $fields));
         $this->facetLimit       = $limit;
         return $this;
@@ -243,10 +242,9 @@ class ElasticaQueryBuilder
     /**
      * 	Wrap wildcard characters around individual terms of an input string, useful when dealing with "alpha only sort" fields.
      * 	NOTE: The support for custom query syntax of an input string is currently limited to: * () "" OR || AND && NOT ! + -
-     * 	@param string
      * 	@return string
      */
-    public function wildcard($string)
+    public function wildcard(string $string)
     {
         if (!strlen((string) $string)) {
             return $string;
@@ -479,8 +477,6 @@ class ElasticaQueryBuilder
      * Add a filter query clause.
      *
      * Filter queries simply restrict the result set without affecting the score of results
-     *
-     * @param string $query
      */
     public function addFilter($name, $value): static
     {

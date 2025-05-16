@@ -8,6 +8,7 @@ use Psr\Log\LoggerInterface;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\ORM\ArrayList;
+use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\PaginatedList;
 use SilverStripe\Security\Permission;
 use SilverStripe\Control\HTTP;
@@ -38,7 +39,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
     /**
      * Current result set
      *
-     * @var ArrayList
+     * @var array
      */
     protected $currentResults;
 
@@ -116,9 +117,9 @@ class ElasticaSearchEngine extends CustomSearchEngine
 
     /**
      * @param array $data Variables to be used for search params
-     * @param HttpRequest | Form $form
+     * @param HttpRequest | \SilverStripe\Forms\Form $form
      *              The form or request object that triggered the seach
-     * @param ArPage $page
+     * @param \nglasl\extensible\ExtensibleSearchPage $page
      *              The search page with configuration for the search
      */
     public function getSearchResults($data = null, $form = null, $page = null)
@@ -166,7 +167,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
         }
 
         // (strlen($this->SearchType) ? $this->SearchType : null);
-        $fields = $page->getSelectableFields();
+        $fields = $this->getSelectableFields($page);
         // if we've explicitly set a sort by, then we want to make sure we have a type
         // so we can resolve what the field name in elastic. Otherwise we don't care about type
         // overly much
@@ -193,7 +194,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
             foreach ($types as $type) {
                 $convertedType = str_replace('\\', "_", $type);
                 // Search against site tree elements with parent hierarchy restriction.
-                if ($parents && (ClassInfo::baseDataClass($type) === SiteTree::class)) {
+                if ($parents && (DataObject::getSchema()->baseDataClass($type) === SiteTree::class)) {
                     $hierarchyTypes[] = "{$convertedType} AND (ParentsHierarchy:{$parents}))";
                 }
                 // Search against other data objects without parent hierarchy restriction.

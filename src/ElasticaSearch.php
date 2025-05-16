@@ -68,7 +68,7 @@ class ElasticaSearch extends DataExtension
 
     /**
      *
-     * @var \Symbiote\ElasticSearcha\ExtensibleElasticService
+     * @var \Symbiote\ElasticSearch\ExtensibleElasticService
      */
     public $searchService;
 
@@ -305,7 +305,7 @@ class ElasticaSearch extends DataExtension
         $facets        = $this->getResults()->getFacets();
         $queryFacets   = $this->getOwner()->queryFacets();
         $me            = $this->getOwner();
-        $convertFacets = function ($term, $raw) use ($facets, $queryFacets, $me): array {
+        $convertFacets = function ($term, $raw) use ($queryFacets, $me): array {
             $result = [];
             foreach ($raw as $facetTerm) {
                 // if it's a query facet, then we may have a label for it
@@ -363,14 +363,12 @@ class ElasticaSearch extends DataExtension
      * This is useful for ensuring the parameters used in the search can be passed on again
      * for subsequent queries.
      *
-     * @param array $exclusions
-     * 			A list of elements that should be excluded from the final query string
-     *
-     * @return String
+     * @return string
      */
     public function SearchQuery(): ?string
     {
-        $parts = parse_url((string) $_SERVER['REQUEST_URI']);
+        $uri = ($_SERVER['REQUEST_URI'] ?? '');
+        $parts = parse_url($uri);
         if (!$parts) {
             throw new InvalidArgumentException("Can't parse URL: ".$uri);
         }
