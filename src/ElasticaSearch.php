@@ -191,17 +191,21 @@ class ElasticaSearch extends DataExtension
             "FilterFieldsList",
             "Filtering and facets",
             [
-                $kva = \Symbiote\MultiValueField\Fields\KeyValueField::create(
-                    'FilterFields',
-                    _t('ExtensibleSearchPage.FILTER_FIELDS', 'Fields to filter by')
-                ),
-                $kvb = KeyValueField::create(
-                    'UserFilters',
-                    _t('ExtensibleSearchPage.USER_FILTER_FIELDS', 'User selectable filters')
-                ),
-                $kvdf = KeyValueField::create(
-                    'DefaultFilters',
-                    _t('ExtensibleSearchPage.DEFAULT_USER_FIELDS', 'Default filters')
+                \SilverStripe\Forms\CompositeField::create([
+                    $kva = \Symbiote\MultiValueField\Fields\KeyValueField::create(
+                        'FilterFields',
+                        _t('ExtensibleSearchPage.FILTER_FIELDS', 'Fields to filter by')
+                    ),
+                    $kvb = KeyValueField::create(
+                        'UserFilters',
+                        _t('ExtensibleSearchPage.USER_FILTER_FIELDS', 'User selectable filters')
+                    ),
+                    $kvdf = KeyValueField::create(
+                        'DefaultFilters',
+                        _t('ExtensibleSearchPage.DEFAULT_USER_FIELDS', 'Default filters')
+                    ),
+                ])->setTitle(
+                    _t('ExtensibleSearchPage.FILTER_HEADER', 'Filter Settings')
                 ),
                 \SilverStripe\Forms\CompositeField::create([
                     // new MultiValueDropdownField('FacetFields', _t('ExtensibleSearchPage.FACET_FIELDS', 'Fields to create facets for'), $objFields),
