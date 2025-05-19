@@ -367,10 +367,6 @@ class ElasticaSearchEngine extends CustomSearchEngine
 
             $this->elasticResult = $resultSet->getResults();
 
-            if (!$this->elasticResult) {
-                throw new \RuntimeException("Could not retrieve results from elastic");
-            }
-
             unset($data['url']);
             unset($data['start']);
             unset($data['aggregation']);
@@ -387,7 +383,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
                         $bucket['type'] = $fieldFacets[$type] ?? $type;
                         $bucket['field'] = $type;
                         // Determine the redirect to be used when using the facet/aggregation.
-
+                        // @phpstan-ignore argument.type
                         $bucket['link'] = HTTP::setGetVar('aggregation', [
                             $type => $bucket['key']
                         ], $link);
