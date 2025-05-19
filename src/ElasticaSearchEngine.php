@@ -8,6 +8,7 @@ use Psr\Log\LoggerInterface;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\ORM\ArrayList;
+use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\PaginatedList;
 use SilverStripe\Security\Permission;
 use SilverStripe\Control\HTTP;
@@ -38,7 +39,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
     /**
      * Current result set
      *
-     * @var ArrayList
+     * @var array
      */
     protected $currentResults;
 
@@ -77,6 +78,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
         }
     }
 
+    #[\Override]
     public function getSelectableFields($page = null)
     {
         $listType = $this->searchableTypes($page);
@@ -116,11 +118,12 @@ class ElasticaSearchEngine extends CustomSearchEngine
 
     /**
      * @param array $data Variables to be used for search params
-     * @param HttpRequest | Form $form
+     * @param HttpRequest | \SilverStripe\Forms\Form $form
      *              The form or request object that triggered the seach
-     * @param ArPage $page
+     * @param \nglasl\extensible\ExtensibleSearchPage $page
      *              The search page with configuration for the search
      */
+    #[\Override]
     public function getSearchResults($data = null, $form = null, $page = null)
     {
         if ($this->currentResults) {
@@ -142,7 +145,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
         $builder = $this->searchService->getQueryBuilder($page->QueryType);
         if (isset($data['Search']) && strlen((string) $data['Search'])) {
             $query = $data['Search'];
-            // lets convert it to a base solr query
+            // lets convert it to a base query
             $builder->baseQuery($query);
         }
 
@@ -166,11 +169,11 @@ class ElasticaSearchEngine extends CustomSearchEngine
         }
 
         // (strlen($this->SearchType) ? $this->SearchType : null);
-        $fields = $page->getSelectableFields();
+        $fields = $this->getSelectableFields($page);
         // if we've explicitly set a sort by, then we want to make sure we have a type
         // so we can resolve what the field name in elastic. Otherwise we don't care about type
         // overly much
-        if (!count($types) && $sortBy) {
+        if (count($types) === 0 && $sortBy) {
             // default to page
             $types = Config::inst()->get(ElasticaSearch::class, 'additional_search_types');
         }
@@ -182,7 +185,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
         $offset = (int) isset($data['start']) ? $data['start'] : 0;
         $limit = (int) isset($data['limit']) ? $data['limit'] : ($page->ResultsPerPage ?: 10);
         // Apply any hierarchy filters.
-        if (count($types)) {
+        if (count($types) !== 0) {
             $sortBy = $this->searchService->getSortFieldName($sortBy, $types);
             $hierarchyTypes = [];
             $parents = $page->SearchTrees()->count() ? implode(
@@ -193,7 +196,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
             foreach ($types as $type) {
                 $convertedType = str_replace('\\', "_", $type);
                 // Search against site tree elements with parent hierarchy restriction.
-                if ($parents && (ClassInfo::baseDataClass($type) === SiteTree::class)) {
+                if ($parents && (DataObject::getSchema()->baseDataClass($type) === SiteTree::class)) {
                     $hierarchyTypes[] = "{$convertedType} AND (ParentsHierarchy:{$parents}))";
                 }
                 // Search against other data objects without parent hierarchy restriction.
@@ -215,8 +218,8 @@ class ElasticaSearchEngine extends CustomSearchEngine
         $extraFields = $page->ExtraSearchFields->getValues();
 
         // the following serves two purposes; filter out the searched on fields to only those that
-        // are in the actually  searched on types, and to map them to relevant solr types
-        if (count($selectedFields)) {
+        // are in the actually  searched on types, and to map them to relevant types
+        if (count($selectedFields) !== 0) {
             $mappedFields = [];
             foreach ($selectedFields as $field) {
                 $mappedField = $this->searchService->getIndexFieldName($field, $types);
@@ -261,7 +264,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
 
         // Add in any fields we want to facet by in the response set
         $fieldFacets = $page->facetFieldMapping();
-        if (count($fieldFacets)) {
+        if (count($fieldFacets) !== 0) {
             $builder->addFacetFields($fieldFacets, $page->MaxFacetResults ?: 20);
         }
 
@@ -297,7 +300,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
         $filtersAdded = [];
         if (isset($data['UserFilter'])) {
             $filters = $page->UserFilters->getValues();
-            if (count($filters)) {
+            if (count($filters) !== 0) {
                 $queries = array_keys($filters);
                 foreach ($data['UserFilter'] as $index => $junk) {
                     if (isset($queries[$index])) {
@@ -340,7 +343,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
             $results->setPageLength($limit);
             $results->setPageStart($offset);
 
-            if (count($resultSet->toArray())) {
+            if (count($resultSet->toArray()) !== 0) {
                 $results->setTotalItems($resultSet->getTotalItems());
             }
 
@@ -366,10 +369,6 @@ class ElasticaSearchEngine extends CustomSearchEngine
 
             $this->elasticResult = $resultSet->getResults();
 
-            if (!$this->elasticResult) {
-                throw new \RuntimeException("Could not retrieve results from elastic");
-            }
-
             unset($data['url']);
             unset($data['start']);
             unset($data['aggregation']);
@@ -386,7 +385,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
                         $bucket['type'] = $fieldFacets[$type] ?? $type;
                         $bucket['field'] = $type;
                         // Determine the redirect to be used when using the facet/aggregation.
-
+                        // @phpstan-ignore argument.type
                         $bucket['link'] = HTTP::setGetVar('aggregation', [
                             $type => $bucket['key']
                         ], $link);

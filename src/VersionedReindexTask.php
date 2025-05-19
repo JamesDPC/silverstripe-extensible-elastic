@@ -27,6 +27,7 @@ class VersionedReindexTask extends BuildTask
     {
     }
 
+    #[\Override]
     public function run($request)
     {
         if (!Permission::check('ADMIN') && !Director::is_cli()) {
@@ -106,7 +107,7 @@ class VersionedReindexTask extends BuildTask
 
         if ($request->getVar('remove')) {
             [$id, $type] = explode(',', (string) $request->getVar('remove'));
-            if (!$id && !$type) {
+            if ($id === '' || $type === '') {
                 DB::alteration_message("Missing ID and Type for deleting from the index", "error");
                 return;
             }

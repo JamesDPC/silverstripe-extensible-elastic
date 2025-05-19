@@ -4,6 +4,7 @@ namespace Symbiote\ElasticSearch;
 
 use ArrayObject;
 use Elastica\ResultSet;
+use Elastica\Query\QueryString;
 use SilverStripe\Core\Extension;
 use SilverStripe\Forms\Form;
 use SilverStripe\Control\HTTP;
@@ -20,6 +21,7 @@ use SilverStripe\ORM\FieldType\DBVarchar;
  *
  *
  * @author marcus
+ * @extends \SilverStripe\Core\Extension<static>
  */
 class ElasticaSearchController extends Extension
 {
@@ -36,7 +38,7 @@ class ElasticaSearchController extends Extension
 
             $defaults = $page->DefaultFilters->getValues() ?? [];
             $filterOptions = array_keys($filters);
-            if (count($defaults)) {
+            if (count($defaults) !== 0) {
                 foreach ($defaults as $field => $value) {
                     $index = array_search($field . ':' . $value, $filterOptions, true);
                     if ($index !== false) {
@@ -157,6 +159,7 @@ class ElasticaSearchController extends Extension
         if ($request->requestVar('aggregation')) {
             return true;
         }
+
         return null;
     }
 
@@ -186,7 +189,7 @@ class ElasticaSearchController extends Extension
 
         if ($agg && isset($agg['buckets'])) {
             foreach ($agg['buckets'] as $bucket) {
-                if (!isset($bucket['key']) || !strlen((string) $bucket['key'])) {
+                if (!isset($bucket['key']) || (string) $bucket['key'] === '') {
                     continue;
                 }
 
@@ -240,7 +243,7 @@ class ElasticaSearchController extends Extension
             // HACK sorry
             $q = $query->getQuery()->getQuery()->getParam('query');
             foreach ($aggregation as $field => $value) {
-                $q->addFilter(new Query\QueryString("{$field}:\"{$value}\""));
+                $q->addFilter(new QueryString("{$field}:\"{$value}\""));
             }
         }
 
@@ -260,7 +263,7 @@ class ElasticaSearchController extends Extension
                 $this->getOwner()->ResultsPerPage,
                 $request->getVar('start') ?: 0
             ) : ArrayList::create();
-        } catch (Exception $exception) {
+        } catch (\Exception $exception) {
             error_log($exception->getMessage());
             $message = 'Search failed';
             $query   = null;

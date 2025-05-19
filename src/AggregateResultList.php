@@ -21,6 +21,7 @@ class AggregateResultList extends ResultList
         }
     }
 
+    #[\Override]
     public function getResults()
     {
         return $this->aggregateResult;

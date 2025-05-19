@@ -6,6 +6,7 @@ use Elastica\Client;
 use Elastica\Exception\Connection\HttpException;
 use Heyday\Elastica\ElasticaService;
 use Heyday\Elastica\ResultList;
+use Heyday\Elastica\Searchable;
 use SilverStripe\Core\Injector\Injector;
 use Symbiote\ElasticSearch\ElasticaQueryBuilder;
 use Psr\Log\LoggerInterface;
@@ -19,10 +20,8 @@ class ExtensibleElasticService extends ElasticaService
 {
     /**
      * A mapping of all the available query builders
-     *
-     * @var map
      */
-    protected $queryBuilders = [];
+    protected array $queryBuilders = [];
 
     protected $buffered = false;
 
@@ -63,6 +62,7 @@ class ExtensibleElasticService extends ElasticaService
     /**
      * Override as parent class uses a private var
      */
+    #[\Override]
     public function getIndex()
     {
         return $this->getClient()->getIndex($this->customIndexName);
@@ -80,6 +80,7 @@ class ExtensibleElasticService extends ElasticaService
      *
      * @return array
      */
+    #[\Override]
     public function getIndexedClasses()
     {
         $classes = [];
@@ -96,7 +97,7 @@ class ExtensibleElasticService extends ElasticaService
     /**
      * Queries the elastic index using an elastic query, mapped as an array
      *
-     * @param ElasticaQueryBuilder|string $query
+     * @param \Elastica\Query|ElasticaQueryBuilder|string $query
      * @param int $offset
      * @param int $limit
      * @param string $resultClass
@@ -127,10 +128,8 @@ class ExtensibleElasticService extends ElasticaService
 
     /**
      * Gets the list of query parsers available
-     *
-     * @return array
      */
-    public function getQueryBuilders()
+    public function getQueryBuilders(): array
     {
         return $this->queryBuilders;
     }
@@ -145,10 +144,6 @@ class ExtensibleElasticService extends ElasticaService
     {
         return isset($this->queryBuilders[$type]) ? Injector::inst()->create($this->queryBuilders[$type]) : Injector::inst()->create($this->queryBuilders['default']);
     }
-
-    /////////
-    // Solr search compatibility layer
-    /////////
 
     /**
      * Get all fields the particular class type can be searched on
@@ -169,6 +164,7 @@ class ExtensibleElasticService extends ElasticaService
         return $sortBy;
     }
 
+    #[\Override]
     public function index($record)
     {
         if ($this->buffered) {
@@ -182,6 +178,7 @@ class ExtensibleElasticService extends ElasticaService
         } else {
             return parent::index($record);
         }
+
         return null;
     }
 
@@ -206,7 +203,6 @@ class ExtensibleElasticService extends ElasticaService
                 $index->refresh();
             }
         } catch (HttpException $ex) {
-            $this->connected = false;
             // TODO LOG THIS ERROR
             error_log($ex->getMessage());
         } catch (\Elastica\Exception\BulkException $be) {
