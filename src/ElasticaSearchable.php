@@ -29,6 +29,7 @@ class ElasticaSearchable extends Searchable
      *
      * @param string $stage
      */
+    #[\Override]
     public function reIndex($stage = '')
     {
         $currentStage = $stage ?: Versioned::get_stage();
@@ -61,6 +62,7 @@ class ElasticaSearchable extends Searchable
         $this->liveIndex = true;
     }
 
+    #[\Override]
     public function getElasticaFields()
     {
         $result = parent::getElasticaFields();
@@ -101,6 +103,7 @@ class ElasticaSearchable extends Searchable
 
     }
 
+    #[\Override]
     public function getElasticaDocument()
     {
         $document = parent::getElasticaDocument();
@@ -126,7 +129,7 @@ class ElasticaSearchable extends Searchable
 
         if (!$document->has('ClassNameHierarchy')) {
             $classes = array_values(ClassInfo::ancestry($this->getOwner()->ClassName));
-            if (!$classes) {
+            if ($classes === []) {
                 $classes = [$this->getOwner()->ClassName];
             }
 

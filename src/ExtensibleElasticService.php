@@ -62,6 +62,7 @@ class ExtensibleElasticService extends ElasticaService
     /**
      * Override as parent class uses a private var
      */
+    #[\Override]
     public function getIndex()
     {
         return $this->getClient()->getIndex($this->customIndexName);
@@ -79,6 +80,7 @@ class ExtensibleElasticService extends ElasticaService
      *
      * @return array
      */
+    #[\Override]
     public function getIndexedClasses()
     {
         $classes = [];
@@ -126,10 +128,8 @@ class ExtensibleElasticService extends ElasticaService
 
     /**
      * Gets the list of query parsers available
-     *
-     * @return array
      */
-    public function getQueryBuilders()
+    public function getQueryBuilders(): array
     {
         return $this->queryBuilders;
     }
@@ -168,6 +168,7 @@ class ExtensibleElasticService extends ElasticaService
         return $sortBy;
     }
 
+    #[\Override]
     public function index($record)
     {
         if ($this->buffered) {
@@ -181,6 +182,7 @@ class ExtensibleElasticService extends ElasticaService
         } else {
             return parent::index($record);
         }
+
         return null;
     }
 

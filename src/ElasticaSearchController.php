@@ -21,6 +21,7 @@ use SilverStripe\ORM\FieldType\DBVarchar;
  *
  *
  * @author marcus
+ * @extends \SilverStripe\Core\Extension<static>
  */
 class ElasticaSearchController extends Extension
 {
@@ -37,7 +38,7 @@ class ElasticaSearchController extends Extension
 
             $defaults = $page->DefaultFilters->getValues() ?? [];
             $filterOptions = array_keys($filters);
-            if (count($defaults)) {
+            if (count($defaults) !== 0) {
                 foreach ($defaults as $field => $value) {
                     $index = array_search($field . ':' . $value, $filterOptions, true);
                     if ($index !== false) {
@@ -158,6 +159,7 @@ class ElasticaSearchController extends Extension
         if ($request->requestVar('aggregation')) {
             return true;
         }
+
         return null;
     }
 
@@ -187,7 +189,7 @@ class ElasticaSearchController extends Extension
 
         if ($agg && isset($agg['buckets'])) {
             foreach ($agg['buckets'] as $bucket) {
-                if (!isset($bucket['key']) || !strlen((string) $bucket['key'])) {
+                if (!isset($bucket['key']) || (string) $bucket['key'] === '') {
                     continue;
                 }
 

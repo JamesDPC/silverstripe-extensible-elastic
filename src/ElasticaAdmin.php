@@ -25,6 +25,7 @@ class ElasticaAdmin extends ModelAdmin
 
     private static string $menu_title = 'Elastic Search';
 
+    #[\Override]
     public function getEditForm($id = null, $fields = null)
     {
         $form = parent::getEditForm($id, $fields);

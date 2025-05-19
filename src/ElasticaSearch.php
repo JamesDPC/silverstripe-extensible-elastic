@@ -26,6 +26,28 @@ use SilverStripe\Forms\ToggleCompositeField;
 
 /**
  * @author marcus
+ * @property ?string $QueryType
+ * @property int $Fuzziness
+ * @property mixed $SearchType
+ * @property mixed $SearchOnFields
+ * @property mixed $ExtraSearchFields
+ * @property mixed $BoostFields
+ * @property mixed $BoostMatchFields
+ * @property int $ContentMatchBoost
+ * @property mixed $FacetFields
+ * @property mixed $CustomFacetFields
+ * @property mixed $FacetMapping
+ * @property mixed $FacetQueries
+ * @property int $MinFacetCount
+ * @property int $MaxFacetResults
+ * @property int $ExpandedResultCount
+ * @property ?string $InitialExpandField
+ * @property mixed $FilterFields
+ * @property mixed $UserFilters
+ * @property mixed $DefaultFilters
+ * @property ?string $FacetStyle
+ * @property bool $ShowFacetCount
+ * @extends \SilverStripe\ORM\DataExtension<(\nglasl\extensible\ExtensibleSearchPage & static)>
  */
 class ElasticaSearch extends DataExtension
 {
@@ -302,8 +324,8 @@ class ElasticaSearch extends DataExtension
     public function SearchQuery(): ?string
     {
         $uri = ($_SERVER['REQUEST_URI'] ?? '');
-        $parts = parse_url($uri);
-        if (!$parts) {
+        $parts = parse_url((string) $uri);
+        if ($parts === false) {
             throw new InvalidArgumentException("Can't parse URL: ".$uri);
         }
 
@@ -315,6 +337,7 @@ class ElasticaSearch extends DataExtension
                 return http_build_query($params);
             }
         }
+
         return null;
     }
 }

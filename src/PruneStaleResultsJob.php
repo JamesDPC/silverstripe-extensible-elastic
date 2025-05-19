@@ -28,6 +28,7 @@ class PruneStaleResultsJob extends AbstractQueuedJob
         }
     }
 
+    #[\Override]
     public function getTitle()
     {
         return "Prune stale elasticsearch " . $this->filter;
@@ -56,6 +57,7 @@ class PruneStaleResultsJob extends AbstractQueuedJob
         return $resultSet->getResults();
     }
 
+    #[\Override]
     public function process()
     {
         $list = $this->getOldItems();
@@ -63,7 +65,7 @@ class PruneStaleResultsJob extends AbstractQueuedJob
 
         $numFound = count($list);
 
-        if ($numFound) {
+        if ($numFound !== 0) {
             $service = Injector::inst()->get(ElasticaService::class);
             $service->getIndex()->deleteDocuments($list);
         }

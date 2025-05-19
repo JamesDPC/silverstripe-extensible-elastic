@@ -242,11 +242,10 @@ class ElasticaQueryBuilder
     /**
      * 	Wrap wildcard characters around individual terms of an input string, useful when dealing with "alpha only sort" fields.
      * 	NOTE: The support for custom query syntax of an input string is currently limited to: * () "" OR || AND && NOT ! + -
-     * 	@return string
      */
-    public function wildcard(string $string)
+    public function wildcard(string $string): string
     {
-        if (!strlen((string) $string)) {
+        if ($string === '') {
             return $string;
         }
 
@@ -257,8 +256,8 @@ class ElasticaQueryBuilder
 
         // Appropriately handle the input string if it only consists of a single term, where wildcard characters should not be wrapped around quotations.
 
-        $single = (!str_contains((string) $string, ' '));
-        if ($single && (!str_contains((string) $string, '"'))) {
+        $single = (!str_contains($string, ' '));
+        if ($single && (!str_contains($string, '"'))) {
             return "{$string}$wildcard";
         } elseif ($single) {
             return $string;
@@ -266,12 +265,12 @@ class ElasticaQueryBuilder
 
         // Parse each individual term of the input string.
 
-        $string = explode(' ', (string) $string);
+        $string = explode(' ', $string);
         $terms  = [];
         if (is_array($string)) {
             $quotation = false;
             foreach ($string as $term) {
-                if (!strlen($term)) {
+                if ($term === '') {
                     continue;
                 }
 
@@ -382,7 +381,7 @@ class ElasticaQueryBuilder
 
         // Determine the filters to be applied, separating the class hierarchy restriction.
 
-        if (count($this->filters)) {
+        if (count($this->filters) !== 0) {
             $currentFilters = $this->filters;
 
             // Determine the filters to be applied
@@ -448,7 +447,7 @@ class ElasticaQueryBuilder
 
             if (isset($this->expandFacetResults[$facet])) {
                 $expando = new TopHits('top_facet_docs');
-                if ($sort) {
+                if ($sort !== null && $sort !== []) {
                     $expando->setSort($sort);
                 }
 

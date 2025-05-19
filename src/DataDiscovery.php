@@ -9,6 +9,8 @@ use SilverStripe\CMS\Model\SiteTree;
 
 /**
  * @author marcus
+ * @property mixed $BoostTerms
+ * @extends \SilverStripe\Core\Extension<static>
  */
 class DataDiscovery extends Extension
 {
