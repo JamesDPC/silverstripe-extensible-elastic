@@ -18,7 +18,7 @@
     ],
     "require": {
         "silverstripe/cms": "^5",
-        "nglasl/silverstripe-extensible-search": "dev-ss5",
+        "nglasl/silverstripe-extensible-search": "dev-feat-ci-files",
         "heyday/silverstripe-elastica": "^4.3",
         "symbiote/silverstripe-multivaluefield": "^6"
     },
