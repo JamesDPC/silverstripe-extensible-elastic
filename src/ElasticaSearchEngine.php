@@ -145,7 +145,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
         $builder = $this->searchService->getQueryBuilder($page->QueryType);
         if (isset($data['Search']) && strlen((string) $data['Search'])) {
             $query = $data['Search'];
-            // lets convert it to a base solr query
+            // lets convert it to a base query
             $builder->baseQuery($query);
         }
 
@@ -218,7 +218,7 @@ class ElasticaSearchEngine extends CustomSearchEngine
         $extraFields = $page->ExtraSearchFields->getValues();
 
         // the following serves two purposes; filter out the searched on fields to only those that
-        // are in the actually  searched on types, and to map them to relevant solr types
+        // are in the actually  searched on types, and to map them to relevant types
         if (count($selectedFields) !== 0) {
             $mappedFields = [];
             foreach ($selectedFields as $field) {

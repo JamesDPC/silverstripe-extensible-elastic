@@ -145,10 +145,6 @@ class ExtensibleElasticService extends ElasticaService
         return isset($this->queryBuilders[$type]) ? Injector::inst()->create($this->queryBuilders[$type]) : Injector::inst()->create($this->queryBuilders['default']);
     }
 
-    /////////
-    // Solr search compatibility layer
-    /////////
-
     /**
      * Get all fields the particular class type can be searched on
      * @param string $listType
