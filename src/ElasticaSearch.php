@@ -187,43 +187,74 @@ class ElasticaSearch extends DataExtension
 
         $opts = Config::inst()->get(self::class, 'facet_styles');
 
-
-        $filtering = ToggleCompositeField::create("FilterFieldsList", "Filtering and facets", [
-            $kva = \Symbiote\MultiValueField\Fields\KeyValueField::create('FilterFields', _t('ExtensibleSearchPage.FILTER_FIELDS', 'Fields to filter by')),
-            $kvb = KeyValueField::create('UserFilters', _t('ExtensibleSearchPage.USER_FILTER_FIELDS', 'User selectable filters')),
-            $kvdf = KeyValueField::create('DefaultFilters', _t('ExtensibleSearchPage.DEFAULT_USER_FIELDS', 'Default filters')),
-            \SilverStripe\Forms\HeaderField::create('FacetHeader', _t('ExtensibleSearchPage.FACET_HEADER', 'Facet Settings')),
-            // new MultiValueDropdownField('FacetFields', _t('ExtensibleSearchPage.FACET_FIELDS', 'Fields to create facets for'), $objFields),
-            // new MultiValueTextField('CustomFacetFields', _t('ExtensibleSearchPage.CUSTOM_FACET_FIELDS', 'Additional fields to create facets for')),
-            \Symbiote\MultiValueField\Fields\KeyValueField::create('FacetMapping', _t('ExtensibleSearchPage.FACET_MAPPING', 'Mapping of facet title to nice title'), $facetMappingFields),
-            KeyValueField::create(
-                'FacetQueries',
-                _t('ExtensibleSearchPage.FACET_QUERIES', 'Fields to create query facets for')
-            )->setRightTitle("Enter an elastic query, then the field name"),
-            $kvc = KeyValueField::create(
-                'FacetFields',
-                _t('ExtensibleSearchPage.FACET_FIELDS', 'Fields to create facets for'),
-                $objFields
-            ),
-            $kvd = KeyValueField::create(
-                'CustomFacetFields',
-                _t('ExtensibleSearchPage.CUSTOM_FACET_FIELDS', 'Additional fields to create facets for')
-            ),
-            DropdownField::create('FacetStyle', _t('ExtensibleSearchPage.FACET_STYLE', 'Facet display'), $opts)->setEmptyString('Manual'),
-            CheckboxField::create('ShowFacetCount', _t('ExtensibleSearchPage.SHOW_FACET_COUNT', 'Show facet count')),
-            NumericField::create(
-                'MaxFacetResults',
-                _t('ExtensibleSearchPage.MAX_FACET_COUNT', 'Maximum results displayed in facet list'),
-                20
-            ),
-            $tf = TextField::create('InitialExpandField', _t('ExtensibleSearchPage.INITIAL_EXPAND_FIELD', 'Initial facet to display results for')),
-            $efc = NumericField::create('ExpandedResultCount', _t('ExtensibleSearchPage.EXPAND_COUNT', 'Number of expanded results to show'), '5'),
-            $mfc = NumericField::create(
-                'MinFacetCount',
-                _t('ExtensibleSearchPage.MIN_FACET_COUNT', 'Minimum facet count for inclusion in facet results'),
-                2
-            ),
-        ]);
+        $filtering = ToggleCompositeField::create(
+            "FilterFieldsList",
+            "Filtering and facets",
+            [
+                $kva = \Symbiote\MultiValueField\Fields\KeyValueField::create(
+                    'FilterFields',
+                    _t('ExtensibleSearchPage.FILTER_FIELDS', 'Fields to filter by')
+                ),
+                $kvb = KeyValueField::create(
+                    'UserFilters',
+                    _t('ExtensibleSearchPage.USER_FILTER_FIELDS', 'User selectable filters')
+                ),
+                $kvdf = KeyValueField::create(
+                    'DefaultFilters',
+                    _t('ExtensibleSearchPage.DEFAULT_USER_FIELDS', 'Default filters')
+                ),
+                \SilverStripe\Forms\CompositeField::create([
+                    // new MultiValueDropdownField('FacetFields', _t('ExtensibleSearchPage.FACET_FIELDS', 'Fields to create facets for'), $objFields),
+                    // new MultiValueTextField('CustomFacetFields', _t('ExtensibleSearchPage.CUSTOM_FACET_FIELDS', 'Additional fields to create facets for')),
+                    \Symbiote\MultiValueField\Fields\KeyValueField::create(
+                        'FacetMapping',
+                        _t('ExtensibleSearchPage.FACET_MAPPING', 'Mapping of facet title to nice title'),
+                        $facetMappingFields
+                    ),
+                    KeyValueField::create(
+                        'FacetQueries',
+                        _t('ExtensibleSearchPage.FACET_QUERIES', 'Fields to create query facets for')
+                    )->setRightTitle("Enter an elastic query, then the field name"),
+                    $kvc = KeyValueField::create(
+                        'FacetFields',
+                        _t('ExtensibleSearchPage.FACET_FIELDS', 'Fields to create facets for'),
+                        $objFields
+                    ),
+                    $kvd = KeyValueField::create(
+                        'CustomFacetFields',
+                        _t('ExtensibleSearchPage.CUSTOM_FACET_FIELDS', 'Additional fields to create facets for')
+                    ),
+                    DropdownField::create(
+                        'FacetStyle',
+                        _t('ExtensibleSearchPage.FACET_STYLE', 'Facet display'),
+                        $opts
+                    )->setEmptyString('Manual'),
+                    CheckboxField::create(
+                        'ShowFacetCount',
+                        _t('ExtensibleSearchPage.SHOW_FACET_COUNT', 'Show facet count')
+                    ),
+                    NumericField::create(
+                        'MaxFacetResults',
+                        _t('ExtensibleSearchPage.MAX_FACET_COUNT', 'Maximum results displayed in facet list'),
+                        20
+                    ),
+                    $tf = TextField::create(
+                        'InitialExpandField',
+                        _t('ExtensibleSearchPage.INITIAL_EXPAND_FIELD', 'Initial facet to display results for')
+                    ),
+                    $efc = NumericField::create(
+                        'ExpandedResultCount',
+                        _t('ExtensibleSearchPage.EXPAND_COUNT', 'Number of expanded results to show'),
+                        '5'
+                    ),
+                    $mfc = NumericField::create(
+                        'MinFacetCount',
+                        _t('ExtensibleSearchPage.MIN_FACET_COUNT', 'Minimum facet count for inclusion in facet results'),
+                        2
+                    )
+                ])->setTitle(_t('ExtensibleSearchPage.FACET_HEADER', 'Facet Settings'))
+            ]
+        );
 
 
         $kva->setRightTitle("FieldName in the left column, value in the right. This will be applied before the search is executed");
