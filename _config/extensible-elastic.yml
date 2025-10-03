@@ -25,7 +25,3 @@ SilverStripe\ORM\DataObject:
       LastEdited:
         type: date
         format: dateOptionalTime
-    -
-      ElementsForSearch:
-        type: text
-        store: false
